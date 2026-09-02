@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Statement Transformation Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .sub-tab-content {
+            display: none;
+        }
+
+        .sub-tab-content.active {
+            display: block;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: #1a1e24;
+            color: #ffffff;
+            font-family: sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            margin: 30px;
+        }
+
+        .btn-back:hover {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .btn-back:hover .arrow {
+            transform: translateX(-3px);
+        }
+
+        .btn-back .arrow {
+            transition: transform 0.2s ease;
+        }
+
+        /* --- Custom Styles for Zone 7 Ledger Directory --- */
+        #ledgerTable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #ledgerTable,
+        #ledgerTable th,
+        #ledgerTable td {
+            border: 1px solid #000000;
+        }
+
+        #ledgerTable th,
+        #ledgerTable td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        #ledgerTable th {
+            background-color: #007bff;
+            color: white;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+
+        #ledgerTable td[contenteditable="true"]:focus {
+            outline: 2px solid #007bff;
+            background-color: #eef6ff;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        /* --- Custom Styles for Zone 8, 9 & 10 Editable Tables --- */
+        .excel-cell {
+            width: 100%;
+            border: 1px solid transparent;
+            background: transparent;
+            padding: 6px;
+            font-size: 0.88rem;
+        }
+
+        .excel-cell:focus {
+            border-color: #0d9488;
+            background: #fff;
+            outline: none;
+        }
+
+        .zone-table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .zone-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            text-align: left;
+        }
+
+        .zone-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            border-bottom: 2px solid #e1e4e8;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .zone-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e1e4e8;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen font-sans text-slate-800 antialiased">
+    <a href="index.html" class="btn-back">
+        <span class="arrow">←</span> Back to Dashboard
+    </a>
+    <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1
+                    class="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-amber-300 bg-clip-text text-transparent">
+                    Tally Ledger Transformation Hub
+                </h1>
+                <p class="text-xs text-slate-400 mt-0.5">Automated Multi-Zone Statement Cleaner & Column Alignment
+                    Pipeline</p>
+            </div>
+            <div id="statusBadge"
+                class="px-3 py-1 text-xs font-semibold rounded-full bg-slate-800 border border-slate-700 text-slate-400 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Engine Ready
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- 🗂️ Multi-Zone Navigation Bar -->
+        <nav class="flex flex-wrap p-1.5 bg-slate-200/80 rounded-xl mb-8 gap-1 max-w-full shadow-inner">
+            <button onclick="switchTab('zone1')" id="btn-zone1"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">🏦
+                Zone 1: Axis</button>
+            <button onclick="switchTab('zone2')" id="btn-zone2"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">🟢
+                Zone 2: Kotak Eq</button>
+            <button onclick="switchTab('zone3')" id="btn-zone3"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">🟣
+                Zone 3: Kotak Deriv</button>
+            <button onclick="switchTab('zone4')" id="btn-zone4"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">🟠
+                Zone 4: Kotak Fin</button>
+            <button onclick="switchTab('zone5')" id="btn-zone5"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">🔵
+                Zone 5: HDFC MF</button>
+            <button onclick="switchTab('zone6')" id="btn-zone6"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">🟡
+                Zone 6: Dividend</button>
+            <button onclick="switchTab('zone7')" id="btn-zone7"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">📑
+                Zone 7: Directory</button>
+            <button onclick="switchTab('zone8')" id="btn-zone8"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">💼
+                Zone 8: Brokerage</button>
+            <button onclick="switchTab('zone9')" id="btn-zone9"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">🏢
+                Zone 9: Real Estate</button>
+            <button onclick="switchTab('zone10')" id="btn-zone10"
+                class="flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50">🧾
+                Zone 10: Maintenance Bill</button>
+        </nav>
+
+        <!-- 🏦 ZONE 1 PANEL -->
+        <div id="zone1" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-blue-600 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Axis Bank Statement Cleaner</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Automated header stripping and standard cash flow alignment.</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="file" id="file-zone1"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="uploadData('zone1')"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Process
+                            Stream</button>
+                        <button id="dl-zone1" disabled onclick="downloadCompiledData('zone1')"
+                            class="bg-slate-100 text-slate-400 disabled:opacity-50 px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟢 ZONE 2 PANEL -->
+        <div id="zone2" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-emerald-600 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Kotak Neo Equity Ledger</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Validates core equity blocks and portfolio adjustments.</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="file" id="file-zone2"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100" />
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="uploadData('zone2')"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Process
+                            Stream</button>
+                        <button id="dl-zone2" disabled onclick="downloadCompiledData('zone2')"
+                            class="bg-slate-100 text-slate-400 disabled:opacity-50 px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟣 ZONE 3 PANEL -->
+        <div id="zone3" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-purple-600 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Kotak Neo Derivatives Mapping</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Processes F&O options trades, regulatory fees, and premium
+                    breakdowns.</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="file" id="file-zone3"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100" />
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="uploadData('zone3')"
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Process
+                            Stream</button>
+                        <button id="dl-zone3" disabled onclick="downloadCompiledData('zone3')"
+                            class="bg-slate-100 text-slate-400 disabled:opacity-50 px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟠 ZONE 4 PANEL -->
+        <div id="zone4" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-amber-500 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Kotak Neo Financial Ledger</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Main financial ledger tracker isolating clear entries from
+                    systemic descriptions.</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="file" id="file-zone4"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100" />
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="uploadData('zone4')"
+                            class="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Process
+                            Stream</button>
+                        <button id="dl-zone4" disabled onclick="downloadCompiledData('zone4')"
+                            class="bg-slate-100 text-slate-400 disabled:opacity-50 px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🔵 ZONE 5 PANEL -->
+        <div id="zone5" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-sky-500 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">HDFC Mutual Fund Alignment</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Aligns mutual fund purchase values, folios, and direct scheme
+                    heads.</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="file" id="file-zone5"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100" />
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="uploadData('zone5')"
+                            class="bg-sky-600 hover:bg-sky-700 text-white px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Process
+                            Stream</button>
+                        <button id="dl-zone5" disabled onclick="downloadCompiledData('zone5')"
+                            class="bg-slate-100 text-slate-400 disabled:opacity-50 px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🟡 ZONE 6 PANEL -->
+        <div id="zone6" class="tab-content active space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-yellow-500 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Kotak Neo Dividend Income Engine</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Parses raw dividend distribution statements into clean structured
+                    ledgers instantly.</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="file" id="file-zone6"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100" />
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="uploadData('zone6')"
+                            class="bg-yellow-600 hover:bg-yellow-700 text-slate-900 px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Process
+                            Stream</button>
+                        <button id="dl-zone6" disabled onclick="downloadCompiledData('zone6')"
+                            class="bg-slate-100 text-slate-400 disabled:opacity-50 px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap">Download</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📑 ZONE 7 PANEL -->
+        <div id="zone7" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-indigo-600 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Ledger Directory</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Fully editable directory stored locally in memory.</p>
+
+                <div class="flex gap-3 mb-4">
+                    <button onclick="addLedgerRow()"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-all">+
+                        Add Row</button>
+                    <button onclick="exportLedgerCSV()"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition-all">📥
+                        Export to CSV</button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table id="ledgerTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;" class="center">S.N.O</th>
+                                <th>LEDGER NAME</th>
+                                <th>COMPANY NAME</th>
+                                <th>CATEGORY</th>
+                                <th style="width: 90px;" class="center">ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledgerTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 💼 ZONE 8 PANEL -->
+        <div id="zone8" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-purple-600 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Property Brokerage Invoice Extractor (Single Row
+                        Summary)</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Parse Property Brokerage Invoices into single row summary format.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                    <input type="file" id="brk-file" accept=".docx,.pdf,.txt" onchange="handleZone8FileChange()"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100" />
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button id="proc-btn-z8" disabled onclick="processZone8()"
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">Parse
+                            Summary Row</button>
+                        <button id="dl-btn-z8" disabled onclick="downloadZone8()"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">Export
+                            Brokerage Sheet</button>
+                    </div>
+                </div>
+                <div class="zone-table-container" id="table-wrap-z8"></div>
+            </div>
+        </div>
+
+        <!-- 🏢 ZONE 9 PANEL -->
+        <div id="zone9" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-orange-500 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Real Estate Sales Register Generator</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Parse real estate invoices and scale recurring entries instantly
+                    across a 12-month sequence layout for Tally.</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                    <input type="file" id="re-file" accept=".docx,.pdf,.txt" onchange="handleZone9FileChange()"
+                        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button id="realestate-proc" disabled onclick="processZone9Invoice()"
+                            class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">1.
+                            Parse Invoice Row</button>
+                        <button id="realestate-extend" disabled onclick="generateTwelveMonths()"
+                            class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">2.
+                            Expand 12 Months</button>
+                        <button id="realestate-dl" disabled onclick="downloadZone9TallySheet()"
+                            class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">3.
+                            Export Tally Sheet</button>
+                    </div>
+                </div>
+                <div class="zone-table-container" id="realestate-table-wrap"></div>
+            </div>
+        </div>
+
+        <!-- 🧾 ZONE 10 PANEL (MAINTENANCE BILL ENGINE WITH SPECIFIC SUB-ZONE HEADINGS) -->
+        <div id="zone10" class="tab-content space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border p-8">
+                <div class="border-l-4 border-teal-600 pl-3 mb-4">
+                    <h2 class="text-xl font-bold text-slate-900">Maintenance Bill Generator (Multi-Tab Hub)</h2>
+                </div>
+                <p class="text-sm text-slate-500 mb-6">Parse maintenance and electricity bill invoices and scale
+                    recurring entries instantly across a 12-month sequence layout for Tally.</p>
+
+                <!-- Zone 10 Sub-Tab Bar Navigation -->
+                <nav class="flex flex-wrap p-1.5 bg-slate-100 rounded-xl mb-6 gap-1 border border-slate-200">
+                    <button onclick="switchSubTab('z10-sub1')" id="btn-z10-sub1"
+                        class="flex-1 min-w-[140px] py-2 px-3 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:bg-white/50">🏢
+                        Central Park Maintenance</button>
+                    <button onclick="switchSubTab('z10-sub2')" id="btn-z10-sub2"
+                        class="flex-1 min-w-[140px] py-2 px-3 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:bg-white/50">⚡
+                        Central Park Electricity Bill</button>
+                    <button onclick="switchSubTab('z10-sub3')" id="btn-z10-sub3"
+                        class="flex-1 min-w-[140px] py-2 px-3 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:bg-white/50">🏢
+                        MGF Office Maintenance</button>
+                    <button onclick="switchSubTab('z10-sub4')" id="btn-z10-sub4"
+                        class="flex-1 min-w-[140px] py-2 px-3 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:bg-white/50">⚡
+                        MGF Office Electricity Bill</button>
+                    <button onclick="switchSubTab('z10-sub5')" id="btn-z10-sub5"
+                        class="flex-1 min-w-[140px] py-2 px-3 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:bg-white/50">🏢
+                        Udyog Vihar Office Maintenance</button>
+                    <button onclick="switchSubTab('z10-sub6')" id="btn-z10-sub6"
+                        class="flex-1 min-w-[140px] py-2 px-3 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:bg-white/50">⚡
+                        Udyog Vihar Office Electricity Bill</button>
+                </nav>
+
+                <!-- Sub Tab 1: Central Park Maintenance -->
+                <div id="z10-sub1" class="sub-tab-content space-y-6">
+                    <div class="border-b border-slate-200 pb-3 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Central Park Maintenance</h3>
+                        <p class="text-xs text-slate-500">Invoice processing and 12-month expansion for Central Park
+                            Maintenance bills.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                        <input type="file" id="z10-s1-file" accept=".docx,.pdf,.txt"
+                            onchange="handleZone10FileChange('z10-s1')"
+                            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="z10-s1-proc" disabled onclick="processZone10Invoice('z10-s1')"
+                                class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">1.
+                                Parse Invoice Row</button>
+                            <button id="z10-s1-extend" disabled onclick="generateTwelveMonthsZone10('z10-s1')"
+                                class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">2.
+                                Expand 12 Months</button>
+                            <button id="z10-s1-dl" disabled onclick="downloadZone10TallySheet('z10-s1')"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">3.
+                                Export Tally Sheet</button>
+                        </div>
+                    </div>
+                    <div class="zone-table-container" id="z10-s1-table-wrap"></div>
+                </div>
+
+                <!-- Sub Tab 2: Central Park Electricity Bill -->
+                <div id="z10-sub2" class="sub-tab-content space-y-6">
+                    <div class="border-b border-slate-200 pb-3 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Central Park Electricity Bill</h3>
+                        <p class="text-xs text-slate-500">Invoice processing and 12-month expansion for Central Park
+                            Electricity bills.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                        <input type="file" id="z10-s2-file" accept=".docx,.pdf,.txt"
+                            onchange="handleZone10FileChange('z10-s2')"
+                            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="z10-s2-proc" disabled onclick="processZone10Invoice('z10-s2')"
+                                class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">1.
+                                Parse Invoice Row</button>
+                            <button id="z10-s2-extend" disabled onclick="generateTwelveMonthsZone10('z10-s2')"
+                                class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">2.
+                                Expand 12 Months</button>
+                            <button id="z10-s2-dl" disabled onclick="downloadZone10TallySheet('z10-s2')"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">3.
+                                Export Tally Sheet</button>
+                        </div>
+                    </div>
+                    <div class="zone-table-container" id="z10-s2-table-wrap"></div>
+                </div>
+
+                <!-- Sub Tab 3: MGF Office Maintenance -->
+                <div id="z10-sub3" class="sub-tab-content space-y-6">
+                    <div class="border-b border-slate-200 pb-3 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">MGF Office Maintenance</h3>
+                        <p class="text-xs text-slate-500">Invoice processing and 12-month expansion for MGF Office
+                            Maintenance bills.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                        <input type="file" id="z10-s3-file" accept=".docx,.pdf,.txt"
+                            onchange="handleZone10FileChange('z10-s3')"
+                            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="z10-s3-proc" disabled onclick="processZone10Invoice('z10-s3')"
+                                class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">1.
+                                Parse Invoice Row</button>
+                            <button id="z10-s3-extend" disabled onclick="generateTwelveMonthsZone10('z10-s3')"
+                                class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">2.
+                                Expand 12 Months</button>
+                            <button id="z10-s3-dl" disabled onclick="downloadZone10TallySheet('z10-s3')"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">3.
+                                Export Tally Sheet</button>
+                        </div>
+                    </div>
+                    <div class="zone-table-container" id="z10-s3-table-wrap"></div>
+                </div>
+
+                <!-- Sub Tab 4: MGF Office Electricity Bill -->
+                <div id="z10-sub4" class="sub-tab-content space-y-6">
+                    <div class="border-b border-slate-200 pb-3 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">MGF Office Electricity Bill</h3>
+                        <p class="text-xs text-slate-500">Invoice processing and 12-month expansion for MGF Office
+                            Electricity bills.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                        <input type="file" id="z10-s4-file" accept=".docx,.pdf,.txt"
+                            onchange="handleZone10FileChange('z10-s4')"
+                            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="z10-s4-proc" disabled onclick="processZone10Invoice('z10-s4')"
+                                class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">1.
+                                Parse Invoice Row</button>
+                            <button id="z10-s4-extend" disabled onclick="generateTwelveMonthsZone10('z10-s4')"
+                                class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">2.
+                                Expand 12 Months</button>
+                            <button id="z10-s4-dl" disabled onclick="downloadZone10TallySheet('z10-s4')"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">3.
+                                Export Tally Sheet</button>
+                        </div>
+                    </div>
+                    <div class="zone-table-container" id="z10-s4-table-wrap"></div>
+                </div>
+
+                <!-- Sub Tab 5: Udyog Vihar Office Maintenance -->
+                <div id="z10-sub5" class="sub-tab-content space-y-6">
+                    <div class="border-b border-slate-200 pb-3 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Udyog Vihar Office Maintenance</h3>
+                        <p class="text-xs text-slate-500">Invoice processing and 12-month expansion for Udyog Vihar
+                            Office Maintenance bills.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                        <input type="file" id="z10-s5-file" accept=".docx,.pdf,.txt"
+                            onchange="handleZone10FileChange('z10-s5')"
+                            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="z10-s5-proc" disabled onclick="processZone10Invoice('z10-s5')"
+                                class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">1.
+                                Parse Invoice Row</button>
+                            <button id="z10-s5-extend" disabled onclick="generateTwelveMonthsZone10('z10-s5')"
+                                class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">2.
+                                Expand 12 Months</button>
+                            <button id="z10-s5-dl" disabled onclick="downloadZone10TallySheet('z10-s5')"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">3.
+                                Export Tally Sheet</button>
+                        </div>
+                    </div>
+                    <div class="zone-table-container" id="z10-s5-table-wrap"></div>
+                </div>
+
+                <!-- Sub Tab 6: Udyog Vihar Office Electricity Bill -->
+                <div id="z10-sub6" class="sub-tab-content space-y-6">
+                    <div class="border-b border-slate-200 pb-3 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Udyog Vihar Office Electricity Bill</h3>
+                        <p class="text-xs text-slate-500">Invoice processing and 12-month expansion for Udyog Vihar
+                            Office Electricity bills.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                        <input type="file" id="z10-s6-file" accept=".docx,.pdf,.txt"
+                            onchange="handleZone10FileChange('z10-s6')"
+                            class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="z10-s6-proc" disabled onclick="processZone10Invoice('z10-s6')"
+                                class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">1.
+                                Parse Invoice Row</button>
+                            <button id="z10-s6-extend" disabled onclick="generateTwelveMonthsZone10('z10-s6')"
+                                class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">2.
+                                Expand 12 Months</button>
+                            <button id="z10-s6-dl" disabled onclick="downloadZone10TallySheet('z10-s6')"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md text-sm font-semibold whitespace-nowrap disabled:opacity-50">3.
+                                Export Tally Sheet</button>
+                        </div>
+                    </div>
+                    <div class="zone-table-container" id="z10-s6-table-wrap"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 📊 PREVIEW DATA ENTRY PLATFORM FOR ZONES 1-6 -->
+        <div id="workingContainer" class="hidden mt-8 space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div
+                    class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-md" id="previewTitle">Active Process Matrix
+                            Configuration Log</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Editable preview matrix of computed records inside
+                            engine memory trace.</p>
+                    </div>
+                    <span id="recordCountText"
+                        class="text-xs font-semibold px-2.5 py-1 bg-slate-200 text-slate-700 rounded-md">Rows: 0</span>
+                </div>
+                <div class="overflow-x-auto w-full max-h-[500px]">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead id="matrixHead"
+                            class="sticky top-0 shadow-sm z-10 text-xs font-bold uppercase tracking-wider bg-slate-800 text-slate-200">
+                        </thead>
+                        <tbody id="matrixBody" class="divide-y divide-slate-100 bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const API_BASE = "http://127.0.0.1:5000";
+
+        const CONFIG = {
+            zone1: { colorClass: "bg-blue-600 hover:bg-blue-700", headClass: "bg-blue-900 text-blue-50", uploadUrl: `${API_BASE}/upload`, downloadUrl: `${API_BASE}/download` },
+            zone2: { colorClass: "bg-emerald-600 hover:bg-emerald-700", headClass: "bg-emerald-900 text-emerald-50", uploadUrl: `${API_BASE}/upload_zone2`, downloadUrl: `${API_BASE}/download_zone2` },
+            zone3: { colorClass: "bg-purple-600 hover:bg-purple-700", headClass: "bg-purple-900 text-purple-50", uploadUrl: `${API_BASE}/process_options`, downloadUrl: `${API_BASE}/download_options` },
+            zone4: { colorClass: "bg-amber-600 hover:bg-amber-700", headClass: "bg-amber-900 text-amber-50", uploadUrl: `${API_BASE}/upload_zone4`, downloadUrl: `${API_BASE}/download_zone4` },
+            zone5: { colorClass: "bg-sky-600 hover:bg-sky-700", headClass: "bg-sky-900 text-sky-50", uploadUrl: `${API_BASE}/upload_zone5`, downloadUrl: `${API_BASE}/download_zone5` },
+            zone6: { colorClass: "bg-yellow-500 hover:bg-yellow-600", headClass: "bg-yellow-900 text-yellow-50", uploadUrl: `${API_BASE}/upload_zone6`, downloadUrl: `${API_BASE}/download_zone6` }
+        };
+
+        let currentActiveZone = "zone6";
+        let inMemoryState = {};
+        const LEDGER_STORAGE_KEY = 'editable_ledger_table_data';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLedgerData();
+            switchSubTab('z10-sub1');
+        });
+
+        function updateTabButtonsUI() {
+            ["zone1", "zone2", "zone3", "zone4", "zone5", "zone6", "zone7", "zone8", "zone9", "zone10"].forEach(z => {
+                const btn = document.getElementById(`btn-${z}`);
+                if (btn) btn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-medium transition-all text-slate-700 hover:bg-white/50";
+            });
+            const activeBtn = document.getElementById(`btn-${currentActiveZone}`);
+            if (currentActiveZone === 'zone1') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-blue-600 text-white shadow";
+            if (currentActiveZone === 'zone2') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-emerald-600 text-white shadow";
+            if (currentActiveZone === 'zone3') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-purple-600 text-white shadow";
+            if (currentActiveZone === 'zone4') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-amber-500 text-white shadow";
+            if (currentActiveZone === 'zone5') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-sky-500 text-white shadow";
+            if (currentActiveZone === 'zone6') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-yellow-500 text-slate-900 shadow";
+            if (currentActiveZone === 'zone7') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-indigo-600 text-white shadow";
+            if (currentActiveZone === 'zone8') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-purple-700 text-white shadow";
+            if (currentActiveZone === 'zone9') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-orange-600 text-white shadow";
+            if (currentActiveZone === 'zone10') activeBtn.className = "flex-1 min-w-[110px] py-2.5 px-2 rounded-lg text-xs font-bold bg-teal-600 text-white shadow";
+        }
+        updateTabButtonsUI();
+
+        function switchTab(targetZone) {
+            currentActiveZone = targetZone;
+            updateTabButtonsUI();
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(targetZone).classList.add('active');
+
+            if (['zone7', 'zone8', 'zone9', 'zone10'].includes(targetZone)) {
+                document.getElementById("workingContainer").classList.add("hidden");
+            } else if (inMemoryState[targetZone]) {
+                renderMatrixData();
+            } else {
+                document.getElementById("workingContainer").classList.add("hidden");
+            }
+            updateStatus("Tab Ready", "emerald");
+        }
+
+        /* --- Zone 10 Sub Tab Switcher --- */
+        function switchSubTab(targetSubTab) {
+            ["z10-sub1", "z10-sub2", "z10-sub3", "z10-sub4", "z10-sub5", "z10-sub6"].forEach(sub => {
+                const subBtn = document.getElementById(`btn-${sub}`);
+                if (subBtn) {
+                    subBtn.className = "flex-1 min-w-[140px] py-2 px-3 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:bg-white/50";
+                }
+                const content = document.getElementById(sub);
+                if (content) content.classList.remove('active');
+            });
+
+            const activeSubBtn = document.getElementById(`btn-${targetSubTab}`);
+            if (activeSubBtn) {
+                activeSubBtn.className = "flex-1 min-w-[140px] py-2 px-3 rounded-lg text-xs font-bold bg-teal-600 text-white shadow";
+            }
+
+            const activeContent = document.getElementById(targetSubTab);
+            if (activeContent) activeContent.classList.add('active');
+        }
+
+        function updateStatus(msg, color) {
+            const badge = document.getElementById("statusBadge");
+            badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 animate-pulse"></span> ${msg}`;
+        }
+
+        function uploadData(zoneKey) {
+            let fileInput = document.getElementById(`file-${zoneKey}`);
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert("Please select a file to execute transformation.");
+                return;
+            }
+            updateStatus("Parsing File...", "amber");
+            const fd = new FormData();
+            fd.append("file", fileInput.files[0]);
+
+            fetch(CONFIG[zoneKey].uploadUrl, { method: "POST", body: fd })
+                .then(res => {
+                    if (!res.ok) return res.json().then(err => { throw new Error(err.error) });
+                    return res.json();
+                })
+                .then(data => {
+                    inMemoryState[zoneKey] = data;
+
+                    const dlBtn = document.getElementById(`dl-${zoneKey}`);
+                    dlBtn.disabled = false;
+                    dlBtn.className = "bg-slate-800 hover:bg-slate-900 text-white px-5 py-2 rounded-md text-sm font-semibold whitespace-nowrap";
+
+                    renderMatrixData();
+                    updateStatus("Transformation Complete", "emerald");
+                })
+                .catch(err => { alert(`Error: ${err.message}`); updateStatus("Failure", "red"); });
+        }
+
+        function renderMatrixData() {
+            const head = document.getElementById("matrixHead");
+            const body = document.getElementById("matrixBody");
+            const container = document.getElementById("workingContainer");
+            const recordCountText = document.getElementById("recordCountText");
+            const previewTitle = document.getElementById("previewTitle");
+
+            head.innerHTML = ""; body.innerHTML = "";
+            const currentData = inMemoryState[currentActiveZone];
+
+            if (!currentData || !currentData.columns || currentData.columns.length === 0) {
+                container.classList.add("hidden");
+                return;
+            }
+
+            previewTitle.innerText = `${currentActiveZone.toUpperCase()} Live Output Data Stream`;
+            recordCountText.innerText = `Rows: ${currentData.records.length}`;
+            head.className = `sticky top-0 shadow-sm z-10 text-xs font-bold uppercase tracking-wider ${CONFIG[currentActiveZone].headClass}`;
+
+            const trHead = document.createElement("tr");
+            currentData.columns.forEach(col => {
+                const th = document.createElement("th"); th.className = "px-4 py-3 font-semibold"; th.innerText = col; trHead.appendChild(th);
+            });
+            head.appendChild(trHead);
+
+            currentData.records.forEach((row, rowIdx) => {
+                const tr = document.createElement("tr");
+                currentData.columns.forEach(col => {
+                    const td = document.createElement("td");
+                    td.className = "px-4 py-2 text-xs border-r border-slate-100 last:border-0 font-mono text-slate-600";
+                    td.contentEditable = "true";
+                    td.innerText = row[col] !== undefined && row[col] !== null ? row[col] : "";
+                    td.addEventListener("blur", () => { inMemoryState[currentActiveZone].records[rowIdx][col] = td.innerText.trim(); });
+                    tr.appendChild(td);
+                });
+                body.appendChild(tr);
+            });
+            container.classList.remove("hidden");
+        }
+
+        function downloadCompiledData(zoneKey) {
+            const dataToDownload = inMemoryState[zoneKey];
+            if (!dataToDownload || !dataToDownload.records || dataToDownload.records.length === 0) return;
+            updateStatus("Compiling Sheet...", "amber");
+
+            fetch(CONFIG[zoneKey].downloadUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ records: dataToDownload.records })
+            })
+                .then(res => { if (!res.ok) throw new Error("Export failure"); return res.blob(); })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a"); a.href = url;
+                    a.download = `Cleaned_Output_${zoneKey.toUpperCase()}.xlsx`;
+                    document.body.appendChild(a); a.click(); a.remove();
+                    updateStatus("Excel Exported", "emerald");
+                })
+                .catch(err => { alert(err.message); updateStatus("Error", "red"); });
+        }
+
+        /* --- Zone 7 Ledger Directory Logic --- */
+        function loadLedgerData() {
+            const rawData = localStorage.getItem(LEDGER_STORAGE_KEY);
+            const tableBody = document.getElementById('ledgerTableBody');
+            tableBody.innerHTML = '';
+
+            if (rawData) {
+                const rowsData = JSON.parse(rawData);
+                if (rowsData.length > 0) {
+                    rowsData.forEach(data => createLedgerRow(data.ledger, data.company, data.category));
+                    renumberLedgerRows();
+                    return;
+                }
+            }
+
+            createLedgerRow('Sample Ledger', 'Acme Corp', 'Expenses');
+            renumberLedgerRows();
+            saveLedgerData();
+        }
+
+        function createLedgerRow(ledger = '', company = '', category = '') {
+            const tableBody = document.getElementById('ledgerTableBody');
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td class="sno center"></td>
+                <td contenteditable="true" oninput="saveLedgerData()">${ledger}</td>
+                <td contenteditable="true" oninput="saveLedgerData()">${company}</td>
+                <td contenteditable="true" oninput="saveLedgerData()">${category}</td>
+                <td class="center">
+                    <button class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 text-xs font-semibold rounded" onclick="deleteLedgerRow(this)">Delete</button>
+                </td>
+            `;
+
+            tableBody.appendChild(tr);
+        }
+
+        function addLedgerRow() {
+            createLedgerRow('', '', '');
+            renumberLedgerRows();
+            saveLedgerData();
+        }
+
+        function deleteLedgerRow(button) {
+            const row = button.closest('tr');
+            row.remove();
+            renumberLedgerRows();
+            saveLedgerData();
+        }
+
+        function renumberLedgerRows() {
+            const rows = document.querySelectorAll('#ledgerTableBody tr');
+            rows.forEach((row, index) => {
+                const snoCell = row.querySelector('.sno');
+                if (snoCell) {
+                    snoCell.textContent = index + 1;
+                }
+            });
+        }
+
+        function saveLedgerData() {
+            const rows = document.querySelectorAll('#ledgerTableBody tr');
+            const tableData = [];
+
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                tableData.push({
+                    ledger: cells[1].textContent.trim(),
+                    company: cells[2].textContent.trim(),
+                    category: cells[3].textContent.trim()
+                });
+            });
+
+            localStorage.setItem(LEDGER_STORAGE_KEY, JSON.stringify(tableData));
+        }
+
+        function exportLedgerCSV() {
+            const rows = document.querySelectorAll('#ledgerTable tr');
+            const csvContent = [];
+
+            rows.forEach(row => {
+                const rowData = [];
+                const cells = row.querySelectorAll('th:not(:last-child), td:not(:last-child)');
+
+                cells.forEach(cell => {
+                    let text = cell.textContent.trim().replace(/"/g, '""');
+                    rowData.push(`"${text}"`);
+                });
+
+                if (rowData.length > 0) {
+                    csvContent.push(rowData.join(','));
+                }
+            });
+
+            const blob = new Blob([csvContent.join('\n')], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'ledger_data.csv');
+            document.body.appendChild(link);
+            link.click();
+
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        /* --- Zone 8 Property Brokerage Logic --- */
+        let zone8Data = { columns: [], records: [], file: null };
+
+        function handleZone8FileChange() {
+            const file = document.getElementById('brk-file').files[0];
+            if (file) {
+                zone8Data.file = file;
+                document.getElementById('proc-btn-z8').disabled = false;
+            }
+        }
+
+        async function processZone8() {
+            const formData = new FormData();
+            formData.append('file', zone8Data.file);
+            const procBtn = document.getElementById('proc-btn-z8');
+            procBtn.innerText = 'Parsing Data...';
+            updateStatus("Processing Zone 8...", "amber");
+
+            try {
+                const response = await fetch(`${API_BASE}/process_broker_expense`, { method: 'POST', body: formData });
+                const result = await response.json();
+                zone8Data.columns = result.columns;
+                zone8Data.records = result.records;
+
+                let html = '<table class="zone-table"><thead><tr>';
+                zone8Data.columns.forEach(c => html += `<th>${c}</th>`);
+                html += '</tr></thead><tbody>';
+                zone8Data.records.forEach((row, rIdx) => {
+                    html += '<tr>';
+                    zone8Data.columns.forEach(c => {
+                        let val = row[c] !== undefined ? row[c] : '';
+                        html += `<td><input type="text" class="excel-cell" value="${val}" onchange="zone8Data.records[${rIdx}]['${c}'] = this.value"></td>`;
+                    });
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                document.getElementById('table-wrap-z8').innerHTML = html;
+                document.getElementById('dl-btn-z8').disabled = false;
+                updateStatus("Zone 8 Extracted", "emerald");
+            } catch (err) {
+                alert("Parsing engine failed.");
+                updateStatus("Zone 8 Error", "red");
+            }
+            procBtn.innerText = 'Parse Summary Row';
+        }
+
+        async function downloadZone8() {
+            try {
+                updateStatus("Exporting Zone 8...", "amber");
+                const response = await fetch(`${API_BASE}/download_broker_expense`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ columns: zone8Data.columns, records: zone8Data.records })
+                });
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `Property_Brokerage_Summary.xlsx`;
+                link.click();
+                updateStatus("Zone 8 Exported", "emerald");
+            } catch (err) {
+                alert("Download failed.");
+                updateStatus("Download Error", "red");
+            }
+        }
+
+        /* --- Zone 9 Real Estate Invoice Sequence Logic --- */
+        let zone9Data = { file: null, columns: [], records: [] };
+        const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+        function handleZone9FileChange() {
+            const fileInput = document.getElementById('re-file');
+            if (fileInput.files.length > 0) {
+                zone9Data.file = fileInput.files[0];
+                document.getElementById('realestate-proc').disabled = false;
+                document.getElementById('realestate-extend').disabled = true;
+                document.getElementById('realestate-dl').disabled = true;
+            }
+        }
+
+        async function processZone9Invoice() {
+            if (!zone9Data.file) return;
+
+            const formData = new FormData();
+            formData.append('file', zone9Data.file);
+
+            const procBtn = document.getElementById('realestate-proc');
+            procBtn.innerText = 'Extracting...';
+            procBtn.disabled = true;
+            updateStatus("Processing Zone 9...", "amber");
+
+            try {
+                const response = await fetch(`${API_BASE}/process_invoice`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Server parsing execution issue occurred.');
+
+                const result = await response.json();
+                zone9Data.columns = result.columns;
+                zone9Data.records = result.records;
+
+                renderZone9OutputGrid(result.columns, result.records);
+                document.getElementById('realestate-extend').disabled = false;
+                document.getElementById('realestate-dl').disabled = false;
+                updateStatus("Zone 9 Extracted", "emerald");
+            } catch (err) {
+                alert(`Error executing parser rules: ${err.message}`);
+                updateStatus("Zone 9 Error", "red");
+            } finally {
+                procBtn.innerText = '1. Parse Invoice Row';
+                procBtn.disabled = false;
+            }
+        }
+
+        function generateTwelveMonths() {
+            if (zone9Data.records.length === 0) return;
+
+            const baselineRow = { ...zone9Data.records[0] };
+            let sequentialRecords = [baselineRow];
+
+            let currentInvNo = baselineRow["Invoice No"];
+            let currentInvDateStr = baselineRow["Invoice Date"];
+            let currentBillingStr = baselineRow["Billing Period"];
+
+            for (let i = 1; i < 12; i++) {
+                currentInvNo = currentInvNo.replace(/(\d+)/, (match) => {
+                    let nextNum = parseInt(match) + 1;
+                    return nextNum < 10 ? '0' + nextNum : nextNum;
+                });
+
+                currentInvDateStr = advanceSingleDateString(currentInvDateStr);
+                currentBillingStr = advanceBillingPeriodString(currentBillingStr);
+
+                let newRow = { ...baselineRow };
+                newRow["Invoice No"] = currentInvNo;
+                newRow["Invoice Date"] = currentInvDateStr;
+                newRow["Billing Period"] = currentBillingStr;
+
+                sequentialRecords.push(newRow);
+            }
+
+            zone9Data.records = sequentialRecords;
+            renderZone9OutputGrid(zone9Data.columns, zone9Data.records);
+            document.getElementById('realestate-extend').disabled = true;
+            updateStatus("Extended to 12 Months", "emerald");
+        }
+
+        function advanceSingleDateString(dateStr) {
+            for (let m = 0; m < 12; m++) {
+                let pattern = new RegExp(monthNames[m], 'i');
+                if (pattern.test(dateStr)) {
+                    let nextMonthName = monthNames[(m + 1) % 12];
+                    let updatedStr = dateStr.replace(pattern, nextMonthName);
+                    if (m === 11) {
+                        updatedStr = updatedStr.replace(/(\d{4})/, (year) => parseInt(year) + 1);
+                    }
+                    return updatedStr;
+                }
+            }
+            return dateStr;
+        }
+
+        function advanceBillingPeriodString(billingStr) {
+            let separator = "";
+            if (billingStr.includes("–")) separator = "–";
+            else if (billingStr.includes("-")) separator = "-";
+            else if (billingStr.toLowerCase().includes(" to ")) separator = " to ";
+
+            if (separator !== "") {
+                let parts = billingStr.split(separator);
+                if (parts.length === 2) {
+                    let startPart = advanceSingleDateString(parts[0]);
+                    let endPart = advanceSingleDateString(parts[1]);
+                    return startPart + separator + endPart;
+                }
+            }
+            return advanceSingleDateString(billingStr);
+        }
+
+        function renderZone9OutputGrid(columns, records) {
+            const wrap = document.getElementById('realestate-table-wrap');
+            if (records.length === 0) {
+                wrap.innerHTML = '<p style="padding:15px; color:#e74c3c;">No transactional matrix lines processed.</p>';
+                return;
+            }
+
+            let gridHtml = '<table class="zone-table"><thead><tr>';
+            columns.forEach(col => { gridHtml += `<th>${col}</th>`; });
+            gridHtml += '</tr></thead><tbody>';
+
+            records.forEach(row => {
+                gridHtml += '<tr>';
+                columns.forEach(col => {
+                    gridHtml += `<td>${row[col] !== undefined ? row[col] : ''}</td>`;
+                });
+                gridHtml += '</tr>';
+            });
+
+            gridHtml += '</tbody></table>';
+            wrap.innerHTML = gridHtml;
+        }
+
+        async function downloadZone9TallySheet() {
+            if (zone9Data.records.length === 0) return;
+
+            try {
+                updateStatus("Exporting Zone 9...", "amber");
+                const response = await fetch(`${API_BASE}/download_invoice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        columns: zone9Data.columns,
+                        records: zone9Data.records
+                    })
+                });
+
+                if (!response.ok) throw new Error('Could not compile download binary.');
+
+                const dataBlob = await response.blob();
+                const anchorNode = document.createElement('a');
+                anchorNode.href = URL.createObjectURL(dataBlob);
+                anchorNode.download = 'Tally_Sales_Register.xlsx';
+                document.body.appendChild(anchorNode);
+                anchorNode.click();
+                document.body.removeChild(anchorNode);
+                updateStatus("Zone 9 Exported", "emerald");
+            } catch (err) {
+                alert(`Failed download formatting: ${err.message}`);
+                updateStatus("Download Error", "red");
+            }
+        }
+
+        /* --- Zone 10 Sub-Tabs Logic --- */
+        let zone10Data = {
+            'z10-s1': { file: null, columns: [], records: [] },
+            'z10-s2': { file: null, columns: [], records: [] },
+            'z10-s3': { file: null, columns: [], records: [] },
+            'z10-s4': { file: null, columns: [], records: [] },
+            'z10-s5': { file: null, columns: [], records: [] },
+            'z10-s6': { file: null, columns: [], records: [] }
+        };
+
+        function handleZone10FileChange(subKey) {
+            const fileInput = document.getElementById(`${subKey}-file`);
+            if (fileInput.files.length > 0) {
+                zone10Data[subKey].file = fileInput.files[0];
+                document.getElementById(`${subKey}-proc`).disabled = false;
+                document.getElementById(`${subKey}-extend`).disabled = true;
+                document.getElementById(`${subKey}-dl`).disabled = true;
+            }
+        }
+
+        async function processZone10Invoice(subKey) {
+            if (!zone10Data[subKey].file) return;
+
+            const formData = new FormData();
+            formData.append('file', zone10Data[subKey].file);
+
+            const procBtn = document.getElementById(`${subKey}-proc`);
+            procBtn.innerText = 'Extracting...';
+            procBtn.disabled = true;
+            updateStatus(`Processing ${subKey.toUpperCase()}...`, "amber");
+
+            try {
+                const response = await fetch(`${API_BASE}/process_invoice`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Server parsing execution issue occurred.');
+
+                const result = await response.json();
+                zone10Data[subKey].columns = result.columns;
+                zone10Data[subKey].records = result.records;
+
+                renderZone10OutputGrid(subKey, result.columns, result.records);
+                document.getElementById(`${subKey}-extend`).disabled = false;
+                document.getElementById(`${subKey}-dl`).disabled = false;
+                updateStatus(`${subKey.toUpperCase()} Extracted`, "emerald");
+            } catch (err) {
+                alert(`Error executing parser rules: ${err.message}`);
+                updateStatus(`${subKey.toUpperCase()} Error`, "red");
+            } finally {
+                procBtn.innerText = '1. Parse Invoice Row';
+                procBtn.disabled = false;
+            }
+        }
+
+        function generateTwelveMonthsZone10(subKey) {
+            const records = zone10Data[subKey].records;
+            if (records.length === 0) return;
+
+            const baselineRow = { ...records[0] };
+            let sequentialRecords = [baselineRow];
+
+            let currentInvNo = baselineRow["Invoice No"];
+            let currentInvDateStr = baselineRow["Invoice Date"];
+            let currentBillingStr = baselineRow["Billing Period"];
+
+            for (let i = 1; i < 12; i++) {
+                currentInvNo = currentInvNo.replace(/(\d+)/, (match) => {
+                    let nextNum = parseInt(match) + 1;
+                    return nextNum < 10 ? '0' + nextNum : nextNum;
+                });
+
+                currentInvDateStr = advanceSingleDateString(currentInvDateStr);
+                currentBillingStr = advanceBillingPeriodString(currentBillingStr);
+
+                let newRow = { ...baselineRow };
+                newRow["Invoice No"] = currentInvNo;
+                newRow["Invoice Date"] = currentInvDateStr;
+                newRow["Billing Period"] = currentBillingStr;
+
+                sequentialRecords.push(newRow);
+            }
+
+            zone10Data[subKey].records = sequentialRecords;
+            renderZone10OutputGrid(subKey, zone10Data[subKey].columns, zone10Data[subKey].records);
+            document.getElementById(`${subKey}-extend`).disabled = true;
+            updateStatus("Extended to 12 Months", "emerald");
+        }
+
+        function renderZone10OutputGrid(subKey, columns, records) {
+            const wrap = document.getElementById(`${subKey}-table-wrap`);
+            if (records.length === 0) {
+                wrap.innerHTML = '<p style="padding:15px; color:#e74c3c;">No transactional matrix lines processed.</p>';
+                return;
+            }
+
+            let gridHtml = '<table class="zone-table"><thead><tr>';
+            columns.forEach(col => { gridHtml += `<th>${col}</th>`; });
+            gridHtml += '</tr></thead><tbody>';
+
+            records.forEach(row => {
+                gridHtml += '<tr>';
+                columns.forEach(col => {
+                    gridHtml += `<td>${row[col] !== undefined ? row[col] : ''}</td>`;
+                });
+                gridHtml += '</tr>';
+            });
+
+            gridHtml += '</tbody></table>';
+            wrap.innerHTML = gridHtml;
+        }
+
+        async function downloadZone10TallySheet(subKey) {
+            const records = zone10Data[subKey].records;
+            if (records.length === 0) return;
+
+            try {
+                updateStatus(`Exporting ${subKey.toUpperCase()}...`, "amber");
+                const response = await fetch(`${API_BASE}/download_invoice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        columns: zone10Data[subKey].columns,
+                        records: records
+                    })
+                });
+
+                if (!response.ok) throw new Error('Could not compile download binary.');
+
+                const dataBlob = await response.blob();
+                const anchorNode = document.createElement('a');
+                anchorNode.href = URL.createObjectURL(dataBlob);
+                anchorNode.download = `Tally_Sales_Register_${subKey.toUpperCase()}.xlsx`;
+                document.body.appendChild(anchorNode);
+                anchorNode.click();
+                document.body.removeChild(anchorNode);
+                updateStatus("Export Complete", "emerald");
+            } catch (err) {
+                alert(`Failed download formatting: ${err.message}`);
+                updateStatus("Download Error", "red");
+            }
+        }
+    </script>
+</body>
+
+</html>

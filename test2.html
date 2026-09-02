@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth System - Tabbed Interface</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-container {
+            background: #ffffff;
+            width: 100%;
+            max-width: 440px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e4e6eb;
+            margin-bottom: 25px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 5px;
+            background: none;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #65676b;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tab-btn:hover {
+            color: #1877f2;
+        }
+
+        .tab-btn.active {
+            color: #1877f2;
+            border-bottom: 3px solid #1877f2;
+            margin-bottom: -2px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccd0d5;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #1877f2;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #1877f2;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 5px;
+        }
+
+        .btn:hover {
+            background: #166fe5;
+        }
+
+        .btn-clear {
+            background: #dc3545;
+            margin-top: 15px;
+        }
+
+        .btn-clear:hover {
+            background: #c82333;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            display: none;
+            word-break: break-word;
+        }
+
+        .alert-danger {
+            background: #ffebe9;
+            color: #c0392b;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background: #e6f4ea;
+            color: #1e7e34;
+            border: 1px solid #c3e6cb;
+        }
+
+        .pin-display {
+            background: #f8f9fa;
+            border: 2px dashed #1877f2;
+            padding: 15px;
+            text-align: center;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .pin-code {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: #1877f2;
+            margin-top: 5px;
+        }
+
+        .hint-text {
+            font-size: 11px;
+            color: #777;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <!-- Tabs Header: Sign Up is FIRST -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('signup')">Sign Up</button>
+            <button class="tab-btn" onclick="switchTab('login')">Login</button>
+            <button class="tab-btn" onclick="switchTab('forgot')">Forgot</button>
+        </div>
+
+        <!-- Alert Message Banner -->
+        <div id="alertBox" class="alert"></div>
+
+        <!-- 1. SIGN UP TAB (Default Open Page) -->
+        <div id="signup" class="tab-content active">
+            <form onsubmit="handleSignup(event)">
+                <div class="form-group">
+                    <label for="signupEmail">Email ID</label>
+                    <input type="email" id="signupEmail" required placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="signupUsername">Username</label>
+                    <input type="text" id="signupUsername" required placeholder="Choose a username">
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required placeholder="Choose a password">
+                </div>
+                <button type="submit" class="btn">Sign Up</button>
+            </form>
+
+            <!-- System Generated PIN Display Area -->
+            <div id="pinContainer" class="pin-display" style="display: none;">
+                <div>System-Generated Security PIN:</div>
+                <div id="generatedPin" class="pin-code"></div>
+                <small style="color: #666;">Note down this PIN, then log in below.</small>
+            </div>
+        </div>
+
+        <!-- 2. LOGIN TAB -->
+        <div id="login" class="tab-content">
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="loginUsername">Username</label>
+                    <input type="text" id="loginUsername" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn">Log In & Go To Dashboard</button>
+            </form>
+        </div>
+
+        <!-- 3. FORGOT PASSWORD TAB -->
+        <div id="forgot" class="tab-content">
+            <form onsubmit="handleForgot(event)">
+                <div class="form-group">
+                    <label for="forgotUsername">Username</label>
+                    <input type="text" id="forgotUsername" required placeholder="Enter your username">
+                </div>
+
+                <div class="form-group">
+                    <label for="forgotSystemPin">System Security PIN</label>
+                    <input type="text" id="forgotSystemPin" maxlength="4" required
+                        placeholder="Enter the 4-digit system PIN">
+                    <div class="hint-text">Enter the random 4-digit PIN given at Sign Up.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="forgotSpecialPin">Special Security PIN (Repeated Digit)</label>
+                    <input type="text" id="forgotSpecialPin" maxlength="4" required
+                        placeholder="e.g., 1111, 2222 ... 9999">
+                    <div class="hint-text">Pick a single number (1–9) repeated 4 times (e.g. 1111).</div>
+                </div>
+
+                <button type="submit" class="btn">Verify & Proceed To Login</button>
+            </form>
+        </div>
+
+        <!-- Bottom Manual Data Eraser Button -->
+        <button type="button" class="btn btn-clear" onclick="clearAllUserData()">Clear Stored Users Data</button>
+    </div>
+
+    <script>
+        // TARGET DASHBOARD URL
+        const DASHBOARD_URL = "file:///C:/Users/skssu/Desktop/Hedge%20fund%20website/index.html";
+
+        // Open Sign Up Tab on page load without clearing local storage
+        window.addEventListener('DOMContentLoaded', () => {
+            switchTab('signup');
+        });
+
+        // Function to wipe user data ONLY when button is manually clicked
+        function clearAllUserData() {
+            localStorage.removeItem('users_db');
+            localStorage.removeItem('is_authenticated');
+            sessionStorage.removeItem('is_authenticated');
+            showAlert('All stored user details and login session have been wiped successfully!', true);
+        }
+
+        // Tab switching function
+        function switchTab(tabId) {
+            showAlert('', false);
+            document.getElementById('pinContainer').style.display = 'none';
+
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+
+            const indexMap = { 'signup': 0, 'login': 1, 'forgot': 2 };
+            document.querySelectorAll('.tab-btn')[indexMap[tabId]].classList.add('active');
+        }
+
+        // Alert helper
+        function showAlert(message, isSuccess = true) {
+            const alertBox = document.getElementById('alertBox');
+            if (!message) {
+                alertBox.style.display = 'none';
+                return;
+            }
+            alertBox.style.display = 'block';
+            alertBox.className = `alert ${isSuccess ? 'alert-success' : 'alert-danger'}`;
+            alertBox.textContent = message;
+        }
+
+        // LocalStorage Get/Set
+        function getUsersDB() {
+            return JSON.parse(localStorage.getItem('users_db')) || {};
+        }
+
+        function saveUsersDB(db) {
+            localStorage.setItem('users_db', JSON.stringify(db));
+        }
+
+        // -------------------------------------------------------------
+        // 1. SIGNUP HANDLER: Saves data permanently -> Shows PIN -> Swaps to Login Tab
+        // -------------------------------------------------------------
+        function handleSignup(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('signupEmail').value.trim();
+            const username = document.getElementById('signupUsername').value.trim();
+            const password = document.getElementById('signupPassword').value;
+
+            const users = getUsersDB();
+
+            if (users[username]) {
+                showAlert('Username already exists! Please choose another or Log In.', false);
+                document.getElementById('pinContainer').style.display = 'none';
+                return;
+            }
+
+            // Generate a random 4-digit PIN (1000 - 9999)
+            const randomSystemPin = Math.floor(1000 + Math.random() * 9000).toString();
+
+            // Save user profile permanently in LocalStorage
+            users[username] = {
+                email: email,
+                password: password,
+                systemPin: randomSystemPin
+            };
+
+            saveUsersDB(users);
+
+            showAlert('Account created & saved! Redirecting to Login...', true);
+            document.getElementById('generatedPin').textContent = randomSystemPin;
+            document.getElementById('pinContainer').style.display = 'block';
+
+            // Auto-fill username on login tab and transition
+            document.getElementById('loginUsername').value = username;
+
+            setTimeout(() => {
+                switchTab('login');
+                showAlert('Account saved! Please enter your password to access the Dashboard.', true);
+            }, 2500);
+
+            event.target.reset();
+        }
+
+        // -------------------------------------------------------------
+        // 2. LOGIN HANDLER: Checks saved LocalStorage credentials -> Redirects to Dashboard
+        // -------------------------------------------------------------
+        function handleLogin(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+
+            const users = getUsersDB();
+
+            if (!users[username]) {
+                showAlert('Username not found in storage. Please Sign Up first.', false);
+                return;
+            }
+
+            if (users[username].password !== password) {
+                showAlert('Incorrect password. Please try again.', false);
+                return;
+            }
+
+            // Authenticate session persistently across pages via localStorage
+            localStorage.setItem('is_authenticated', 'true');
+            showAlert('Login successful! Redirecting to Dashboard...', true);
+
+            setTimeout(() => {
+                window.location.href = DASHBOARD_URL;
+            }, 1000);
+        }
+
+        // -------------------------------------------------------------
+        // 3. FORGOT PASSWORD HANDLER: Checks PINs -> Switches to Login Tab
+        // -------------------------------------------------------------
+        function handleForgot(event) {
+            event.preventDefault();
+
+            const username = document.getElementById('forgotUsername').value.trim();
+            const systemPin = document.getElementById('forgotSystemPin').value.trim();
+            const specialPin = document.getElementById('forgotSpecialPin').value.trim();
+
+            const users = getUsersDB();
+
+            if (!users[username]) {
+                showAlert('Username not found in storage!', false);
+                return;
+            }
+
+            if (users[username].systemPin !== systemPin) {
+                showAlert('Incorrect System Security PIN!', false);
+                return;
+            }
+
+            const validSpecialPins = ['1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999'];
+
+            if (!validSpecialPins.includes(specialPin)) {
+                showAlert('Invalid Special PIN! Must be a digit 1-9 repeated 4 times (e.g. 1111).', false);
+                return;
+            }
+
+            showAlert(`Verification successful! Your password is: ${users[username].password}. Redirecting to Login...`, true);
+
+            document.getElementById('loginUsername').value = username;
+
+            setTimeout(() => {
+                switchTab('login');
+                showAlert('Verification complete. Enter your password to log in.', true);
+            }, 2500);
+
+            event.target.reset();
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automated Hiring & Employee Management Portal</title>
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- html-docx and FileSaver for Word Export -->
+    <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #0f172a;
+            --muted: #64748b;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --success-hover: #15803d;
+            --danger: #dc2626;
+            --danger-hover: #b91c1c;
+            --dark-header: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding: 24px 16px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .navigation-bar {
+            padding: 0 0 20px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            background-color: #1a1e24;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid #2c323b;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.25s ease-in-out;
+            cursor: pointer;
+        }
+
+        .btn-back .arrow-icon {
+            font-size: 16px;
+            line-height: 1;
+            transition: transform 0.25s ease-in-out;
+        }
+
+        .btn-back:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-back:hover .arrow-icon {
+            transform: translateX(-4px);
+        }
+
+        .tab-nav {
+            display: flex;
+            gap: 6px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 24px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .tab-btn {
+            padding: 12px 16px;
+            border: none;
+            background: #e2e8f0;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: #cbd5e1;
+            color: var(--text);
+        }
+
+        .tab-btn.active {
+            background: var(--dark-header);
+            color: #ffffff;
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--card-bg);
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .subtitle {
+            margin-top: 8px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .info-card {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .info-card h3 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .info-card ul {
+            padding-left: 20px;
+            color: #1e3a8a;
+        }
+
+        .info-card li {
+            margin-bottom: 6px;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .quick-link-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s ease, background 0.2s ease;
+        }
+
+        .quick-link-btn small {
+            font-weight: 400;
+            font-size: 12px;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+
+        .quick-link-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .carousel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .progress-badge {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+        }
+
+        .reset-btn {
+            padding: 6px 12px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: var(--danger-hover);
+        }
+
+        .slide-card {
+            display: none;
+        }
+
+        .slide-card.active {
+            display: block;
+        }
+
+        .field-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #f8fafc;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        .carousel-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 28px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .ctrl-btn {
+            padding: 10px 24px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #334155;
+            transition: all 0.2s;
+        }
+
+        .ctrl-btn:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        .ctrl-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .submit-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+        }
+
+        .submit-btn:hover {
+            background: var(--success-hover);
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 6px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #64748b;
+        }
+
+        th {
+            background-color: var(--dark-header);
+            color: #ffffff;
+            padding: 8px 4px;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 6px 4px;
+            background-color: #ffffff;
+        }
+
+        tfoot td {
+            background-color: #f1f5f9;
+            font-weight: bold;
+            padding: 10px 6px;
+        }
+
+        .sno-col {
+            width: 40px;
+            font-weight: bold;
+        }
+
+        .name-col {
+            text-align: left;
+            padding-left: 8px;
+            padding-right: 8px;
+            white-space: nowrap;
+            min-width: 180px;
+        }
+
+        .name-input,
+        .salary-input {
+            width: 100%;
+            border: 1px dashed transparent;
+            padding: 4px;
+            font-size: 13px;
+            box-sizing: border-box;
+            background: transparent;
+        }
+
+        .salary-input {
+            text-align: right;
+            font-weight: bold;
+            color: #0f172a;
+        }
+
+        .name-input:focus,
+        .salary-input:focus {
+            border-color: var(--primary);
+            background-color: #f0f9ff;
+            outline: none;
+        }
+
+        select.att-select {
+            width: 100%;
+            padding: 4px 2px;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        select[data-status="P"] {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        select[data-status="A"] {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        select[data-status="OD"] {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        select[data-status="HD"] {
+            background-color: #e0f2fe;
+            color: #0c4a6e;
+        }
+
+        select[data-status="SL"] {
+            background-color: #fef9c3;
+            color: #713f12;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-action:hover {
+            opacity: 0.9;
+        }
+
+        .btn-add {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-excel {
+            background-color: #1d6f42;
+            color: white;
+        }
+
+        .btn-word {
+            background-color: #2b579a;
+            color: white;
+        }
+
+        .btn-clear-att {
+            background-color: #64748b;
+            color: white;
+        }
+
+        .btn-delete {
+            background-color: var(--danger);
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .payroll-summary-block {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 24px;
+            padding: 20px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .summary-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-card.monthly-salary {
+            border-left: 5px solid var(--primary);
+        }
+
+        .summary-card.total-deduction {
+            border-left: 5px solid var(--danger);
+        }
+
+        .summary-card.net-payable {
+            border-left: 5px solid var(--success);
+            background: #f0fdf4;
+        }
+
+        .summary-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .summary-card.total-deduction .summary-value {
+            color: var(--danger);
+        }
+
+        .summary-card.net-payable .summary-value {
+            color: var(--success);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 36px 32px;
+            border-radius: 16px;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .success-icon {
+            width: 56px;
+            height: 56px;
+            background: #dcfce7;
+            color: var(--success);
+            font-size: 28px;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px auto;
+        }
+
+        .modal-box h3 {
+            font-size: 22px;
+            color: #0f172a;
+            margin-bottom: 12px;
+        }
+
+        .modal-box p {
+            color: var(--muted);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .modal-close-btn {
+            padding: 12px 28px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navigation-bar">
+        <a href="index.html" class="btn-back">
+            <span class="arrow-icon">←</span>
+            <span>Back to Dashboard</span>
+        </a>
+    </nav>
+
+    <div class="container">
+        <nav class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab(1)">Overview</button>
+            <button class="tab-btn" onclick="switchTab(2)">📅 Attendance Register</button>
+            <button class="tab-btn" onclick="switchTab(3)">💰 Payroll Calculation</button>
+            <button class="tab-btn" onclick="switchTab(4)">HR Test</button>
+            <button class="tab-btn" onclick="switchTab(5)">Accounting Test</button>
+            <button class="tab-btn" onclick="switchTab(6)">Stock Market Test</button>
+            <button class="tab-btn" onclick="switchTab(7)">Real Estate Test</button>
+            <button class="tab-btn" onclick="switchTab(8)">Front Office Manager Test</button>
+        </nav>
+
+        <div id="tab-1" class="tab-content active">
+            <h2>Selection & Workforce Portal Overview</h2>
+            <p class="subtitle">Welcome to our integrated recruitment and payroll management system. Access technical
+                assessments and manage active employee attendance seamlessly.</p>
+
+            <div class="info-card">
+                <h3>Portal Features & Instructions</h3>
+                <ul>
+                    <li><strong>Attendance Register (Tab 2):</strong> Track 30-day employee attendance records (P =
+                        Present, A = Absent, OD = On Duty, HD = Half Day, SL = Short Leave). Includes <strong>Excel
+                            Export</strong>.</li>
+                    <li><strong>Payroll Calculation (Tab 3):</strong> Dynamically calculates payable salaries based on
+                        attendance inputs from Tab 2. Includes <strong>Summary Cards</strong>, <strong>Table Grand
+                            Totals</strong>, and <strong>Excel Export</strong>.</li>
+                    <li><strong>Technical Assessments (Tabs 4-8):</strong> Contains real questions dynamically loaded
+                        from your Excel sheets with automatic saving and <strong>Word Document (.docx) Export</strong>.
+                    </li>
+                    <li><strong>Submission Modal:</strong> Upon completing the final slide in any test, click
+                        <strong>Submit Paper</strong> to open the review status pop-up.
+                    </li>
+                </ul>
+            </div>
+
+            <h3 style="margin-top: 24px;">Quick Access</h3>
+            <div class="nav-grid">
+                <button class="quick-link-btn" onclick="switchTab(2)">
+                    <span>Attendance Register</span>
+                    <small>Daily Log</small>
+                </button>
+                <button class="quick-link-btn" onclick="switchTab(3)">
+                    <span>Payroll Calculation</span>
+                    <small>Salary Calculation</small>
+                </button>
+                <button class="quick-link-btn" onclick="switchTab(4)">
+                    <span>HR Test</span>
+                    <small>Assessment</small>
+                </button>
+                <button class="quick-link-btn" onclick="switchTab(5)">
+                    <span>Accounting Test</span>
+                    <small>Assessment</small>
+                </button>
+                <button class="quick-link-btn" onclick="switchTab(6)">
+                    <span>Stock Market Test</span>
+                    <small>Assessment</small>
+                </button>
+                <button class="quick-link-btn" onclick="switchTab(7)">
+                    <span>Real Estate Test</span>
+                    <small>Assessment</small>
+                </button>
+                <button class="quick-link-btn" onclick="switchTab(8)">
+                    <span>Front Office Manager Test</span>
+                    <small>Assessment</small>
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-2" class="tab-content">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <h2>Employee Attendance Register</h2>
+                <div class="btn-group" style="margin-bottom:0;">
+                    <button class="btn-action btn-add" onclick="addEmployee()">+ Add Employee</button>
+                    <button class="btn-action btn-excel" onclick="exportAttendanceExcel()">📊 Export Excel</button>
+                    <button class="btn-action btn-clear-att" onclick="clearAllData()">Reset Attendance (1-30)</button>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sno-col">S.NO</th>
+                            <th class="name-col">EMPLOYEE NAME</th>
+                            <th>1</th>
+                            <th>2</th>
+                            <th>3</th>
+                            <th>4</th>
+                            <th>5</th>
+                            <th>6</th>
+                            <th>7</th>
+                            <th>8</th>
+                            <th>9</th>
+                            <th>10</th>
+                            <th>11</th>
+                            <th>12</th>
+                            <th>13</th>
+                            <th>14</th>
+                            <th>15</th>
+                            <th>16</th>
+                            <th>17</th>
+                            <th>18</th>
+                            <th>19</th>
+                            <th>20</th>
+                            <th>21</th>
+                            <th>22</th>
+                            <th>23</th>
+                            <th>24</th>
+                            <th>25</th>
+                            <th>26</th>
+                            <th>27</th>
+                            <th>28</th>
+                            <th>29</th>
+                            <th>30</th>
+                            <th style="width:60px;">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-3" class="tab-content">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2>Payroll Calculation Engine</h2>
+                    <p class="subtitle" style="margin:0;">Calculations auto-update using records from Attendance
+                        Register.</p>
+                </div>
+                <button class="btn-action btn-excel" onclick="exportPayrollExcel()">📊 Export Payroll to Excel</button>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sno-col">S.NO</th>
+                            <th class="name-col">EMPLOYEE NAME</th>
+                            <th>PRESENT (P)</th>
+                            <th>ON DUTY (OD)</th>
+                            <th>HALF DAY (HD)</th>
+                            <th>SHORT LEAVE (SL)</th>
+                            <th>PAYABLE DAYS</th>
+                            <th>ABSENT (A)</th>
+                            <th style="min-width: 140px;">MONTHLY SALARY (₹)</th>
+                            <th style="min-width: 140px;">DEDUCTION (₹)</th>
+                            <th style="min-width: 150px;">NET PAYABLE (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payrollTableBody"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="8" style="text-align: right; padding-right: 12px;">GRAND TOTAL:</td>
+                            <td id="totalMonthlySalaryTable" style="text-align: right; color: var(--primary);">₹ 0.00
+                            </td>
+                            <td id="totalDeductionsTable" style="text-align: right; color: var(--danger);">₹ 0.00</td>
+                            <td id="totalNetPayableTable" style="text-align: right; color: var(--success);">₹ 0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="payroll-summary-block">
+                <div class="summary-card monthly-salary">
+                    <span class="summary-title">Total Monthly Salary</span>
+                    <span class="summary-value" id="totalMonthlySalaryBlock">₹ 0.00</span>
+                </div>
+                <div class="summary-card total-deduction">
+                    <span class="summary-title">Total Deductions</span>
+                    <span class="summary-value" id="totalDeductionsBlock">₹ 0.00</span>
+                </div>
+                <div class="summary-card net-payable">
+                    <span class="summary-title">Total Net Salary Payable</span>
+                    <span class="summary-value" id="totalNetPayableBlock">₹ 0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-4" class="tab-content"></div>
+        <div id="tab-5" class="tab-content"></div>
+        <div id="tab-6" class="tab-content"></div>
+        <div id="tab-7" class="tab-content"></div>
+        <div id="tab-8" class="tab-content"></div>
+    </div>
+
+    <div id="submissionModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="success-icon">✓</div>
+            <h3>Paper Submitted Successfully</h3>
+            <p id="submissionModalText">Your paper has been submitted. We will contact you regarding your selection
+                status.</p>
+            <button class="modal-close-btn" onclick="closeModal()">Close Window</button>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_TOTAL_SLIDES = 100;
+        const ASSESSMENT_TABS = [4, 5, 6, 7, 8];
+        const ASSESSMENT_NAMES = {
+            4: "HR Assessment Test",
+            5: "Accounting Assessment Test",
+            6: "Stock Market Assessment Test",
+            7: "Real Estate Assessment Test",
+            8: "Front Office Manager Assessment Test"
+        };
+        const currentSlidePerTab = { 4: 1, 5: 1, 6: 1, 7: 1, 8: 1 };
+        const totalSlidesPerTab = { 4: 100, 5: 100, 6: 100, 7: 100, 8: 100 };
+        const evaluationResultsPerTab = {};
+        const STORAGE_KEY = 'employee_payroll_system_data';
+
+        let store = [];
+
+        function switchTab(tabIndex) {
+            document.querySelectorAll('.tab-nav .tab-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === tabIndex - 1);
+            });
+
+            document.querySelectorAll('.container > .tab-content').forEach((content, idx) => {
+                content.classList.toggle('active', idx === tabIndex - 1);
+            });
+
+            if (tabIndex === 2) {
+                renderAttendanceTable();
+            } else if (tabIndex === 3) {
+                renderPayrollTable();
+            }
+        }
+
+        async function initializeCarousels() {
+            let loadedQuestions = {};
+
+            try {
+                const response = await fetch('http://localhost:5000/api/get-questions');
+                if (response.ok) {
+                    loadedQuestions = await response.json();
+                }
+            } catch (err) {
+                console.warn("Could not fetch questions from backend. Using fallbacks.", err);
+            }
+
+            ASSESSMENT_TABS.forEach((tabNum) => {
+                const tabContainer = document.getElementById(`tab-${tabNum}`);
+                const titleName = ASSESSMENT_NAMES[tabNum];
+                let tabQuestions = loadedQuestions[tabNum] || {};
+
+                if (tabNum === 8) {
+                    // Front Office Manager test: the first slide/question
+                    // isn't needed, so drop it here regardless of what the
+                    // backend returns, and renumber the rest starting at 1.
+                    const sortedKeys = Object.keys(tabQuestions)
+                        .map(Number)
+                        .sort((a, b) => a - b);
+                    if (sortedKeys.length > 0) {
+                        const trimmed = {};
+                        let newIndex = 1;
+                        for (const k of sortedKeys.slice(1)) {
+                            trimmed[newIndex] = tabQuestions[k];
+                            newIndex++;
+                        }
+                        tabQuestions = trimmed;
+                    }
+                }
+
+                const qKeys = Object.keys(tabQuestions);
+                const totalQuestions = qKeys.length > 0 ? qKeys.length : DEFAULT_TOTAL_SLIDES;
+
+                totalSlidesPerTab[tabNum] = totalQuestions;
+
+                let html = `
+                    <div class="carousel-header">
+                        <h3>${titleName}</h3>
+                        <div class="header-actions">
+                            <button type="button" class="btn-action btn-word" onclick="exportTestToWord(${tabNum})">📄 Export Assessment to Word (.docx)</button>
+                            <button type="button" class="reset-btn" onclick="resetSectionAnswers(${tabNum})">Reset Answers</button>
+                            <span class="progress-badge" id="progress-tab-${tabNum}">Slide 1 of ${totalQuestions}</span>
+                        </div>
+                    </div>
+                    <form id="form-tab-${tabNum}" onsubmit="handleFormSubmit(event)">
+                `;
+
+                for (let i = 1; i <= totalQuestions; i++) {
+                    const isFirst = (i === 1);
+                    const isLast = (i === totalQuestions);
+                    const fieldKey = `a_${tabNum}_${i}`;
+                    const savedAnswer = localStorage.getItem(fieldKey) || "";
+                    const realQuestionText = tabQuestions[i] || `Question ${i}: Please provide your response.`;
+
+                    html += `
+                        <div class="slide-card ${isFirst ? 'active' : ''}" id="slide-${tabNum}-${i}">
+                            <div class="field-group">
+                                <label for="q_${tabNum}_${i}">Question ${i}:</label>
+                                <textarea id="q_${tabNum}_${i}" name="q_${tabNum}_${i}" readonly style="font-weight:600; color:#1e293b; background:#f1f5f9;">${realQuestionText}</textarea>
+                            </div>
+                            <div class="field-group">
+                                <label for="${fieldKey}">Your Answer:</label>
+                                <textarea id="${fieldKey}" name="${fieldKey}" placeholder="Type your detailed answer here..." oninput="saveAnswer('${fieldKey}', this.value)" required>${savedAnswer}</textarea>
+                            </div>
+                            <div class="carousel-controls">
+                                <button type="button" class="ctrl-btn" onclick="navigateSlide(${tabNum}, -1)" ${isFirst ? 'disabled' : ''}>Previous</button>
+                                ${isLast ?
+                            `<button type="submit" class="ctrl-btn submit-btn">Submit Paper</button>` :
+                            `<button type="button" class="ctrl-btn" onclick="navigateSlide(${tabNum}, 1)">Next</button>`
+                        }
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += `</form>`;
+                tabContainer.innerHTML = html;
+            });
+        }
+
+        function saveAnswer(key, value) {
+            localStorage.setItem(key, value);
+        }
+
+        function resetSectionAnswers(tabNum) {
+            const total = totalSlidesPerTab[tabNum];
+            if (confirm(`Are you sure you want to reset all ${total} answers for this assessment section?`)) {
+                for (let i = 1; i <= total; i++) {
+                    const fieldKey = `a_${tabNum}_${i}`;
+                    localStorage.removeItem(fieldKey);
+                    const textarea = document.getElementById(fieldKey);
+                    if (textarea) textarea.value = "";
+                }
+            }
+        }
+
+        function navigateSlide(tabNum, direction) {
+            const current = currentSlidePerTab[tabNum];
+            const maxSlides = totalSlidesPerTab[tabNum];
+            const next = current + direction;
+
+            if (next < 1 || next > maxSlides) return;
+
+            const currentCard = document.getElementById(`slide-${tabNum}-${current}`);
+            const nextCard = document.getElementById(`slide-${tabNum}-${next}`);
+
+            if (currentCard && nextCard) {
+                currentCard.classList.remove('active');
+                nextCard.classList.add('active');
+                currentSlidePerTab[tabNum] = next;
+
+                const badge = document.getElementById(`progress-tab-${tabNum}`);
+                if (badge) badge.innerText = `Slide ${next} of ${maxSlides}`;
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const formId = e.target.id;
+            const tabNum = parseInt(formId.replace('form-tab-', ''));
+            const total = totalSlidesPerTab[tabNum];
+
+            const answers = {};
+            for (let i = 1; i <= total; i++) {
+                const fieldKey = `a_${tabNum}_${i}`;
+                const answerVal = localStorage.getItem(fieldKey) || document.getElementById(fieldKey)?.value || "";
+                answers[i] = answerVal;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5000/api/submit-assessment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tab_id: tabNum,
+                        answers: answers
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    evaluationResultsPerTab[tabNum] = data;
+
+                    const modalContent = document.getElementById('submissionModalText');
+                    if (modalContent) {
+                        modalContent.innerHTML = `
+                            <strong>Assessment Auto-Checked!</strong><br/><br/>
+                            <strong>Total Score:</strong> ${data.total_score} / ${data.max_score} (${data.percentage}%)<br/>
+                            <strong>Result:</strong> <span style="color: ${data.result === 'PASSED' ? '#16a34a' : '#dc2626'}">${data.result}</span><br/><br/>
+                            Your evaluation report has been registered. You can now export the document for HR re-evaluation.
+                        `;
+                    }
+                    document.getElementById('submissionModal').classList.add('active');
+                } else {
+                    alert(`Backend Auto-Check Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error("Backend Connection Error:", error);
+                alert("Could not connect to the Python backend server. Please make sure app.py is running!");
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('submissionModal').classList.remove('active');
+        }
+
+        function renderAttendanceTable() {
+            const tbody = document.getElementById("attendanceTableBody");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            store.forEach((emp, index) => {
+                const tr = document.createElement("tr");
+
+                const snoTd = document.createElement("td");
+                snoTd.className = "sno-col";
+                snoTd.textContent = index + 1;
+                tr.appendChild(snoTd);
+
+                const nameTd = document.createElement("td");
+                nameTd.className = "name-col";
+                const nameInput = document.createElement("input");
+                nameInput.type = "text";
+                nameInput.className = "name-input";
+                nameInput.value = emp.name;
+                nameInput.placeholder = "Employee Name...";
+                nameInput.oninput = (e) => {
+                    store[index].name = e.target.value;
+                    savePayrollStorage(false);
+                };
+                nameTd.appendChild(nameInput);
+                tr.appendChild(nameTd);
+
+                for (let day = 0; day < 30; day++) {
+                    const dayTd = document.createElement("td");
+                    const currentStatus = emp.attendance[day] || "P";
+                    dayTd.innerHTML = `
+                        <select class="att-select" data-status="${currentStatus}" onchange="updateAttendanceStatus(${index}, ${day}, this.value, this)">
+                            <option value="P" ${currentStatus === 'P' ? 'selected' : ''}>P</option>
+                            <option value="A" ${currentStatus === 'A' ? 'selected' : ''}>A</option>
+                            <option value="OD" ${currentStatus === 'OD' ? 'selected' : ''}>OD</option>
+                            <option value="HD" ${currentStatus === 'HD' ? 'selected' : ''}>HD</option>
+                            <option value="SL" ${currentStatus === 'SL' ? 'selected' : ''}>SL</option>
+                        </select>
+                    `;
+                    tr.appendChild(dayTd);
+                }
+
+                const actionTd = document.createElement("td");
+                actionTd.innerHTML = `<button class="btn-action btn-delete" onclick="deleteEmployee(${index})">Delete</button>`;
+                tr.appendChild(actionTd);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateAttendanceStatus(empIndex, dayIndex, newStatus, selectElem) {
+            store[empIndex].attendance[dayIndex] = newStatus;
+            selectElem.setAttribute("data-status", newStatus);
+            savePayrollStorage(false);
+        }
+
+        function renderPayrollTable() {
+            const tbody = document.getElementById("payrollTableBody");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            let grandTotalMonthlySalary = 0;
+            let grandTotalDeductions = 0;
+            let grandTotalNetPayable = 0;
+
+            store.forEach((emp, index) => {
+                let pCount = 0, odCount = 0, hdCount = 0, slCount = 0, aCount = 0;
+                emp.attendance.forEach(status => {
+                    if (status === "P") pCount++;
+                    else if (status === "OD") odCount++;
+                    else if (status === "HD") hdCount++;
+                    else if (status === "SL") slCount++;
+                    else if (status === "A") aCount++;
+                });
+
+                const monthlySalary = parseFloat(emp.salary) || 0;
+                const perDaySalary = monthlySalary / 30;
+                const deductionAmount = perDaySalary * (aCount + (hdCount * 0.5) + (slCount * 0.25));
+                const netSalary = monthlySalary - deductionAmount;
+                const totalPayableDays = pCount + odCount + (hdCount * 0.5) + (slCount * 0.25);
+
+                grandTotalMonthlySalary += monthlySalary;
+                grandTotalDeductions += deductionAmount;
+                grandTotalNetPayable += netSalary;
+
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="sno-col">${index + 1}</td>
+                    <td class="name-col" style="font-weight: bold;">${emp.name || "—"}</td>
+                    <td style="color:#166534; font-weight:bold;">${pCount}</td>
+                    <td style="color:#166534; font-weight:bold;">${odCount}</td>
+                    <td style="color:#0c4a6e; font-weight:bold;">${hdCount}</td>
+                    <td style="color:#713f12; font-weight:bold;">${slCount}</td>
+                    <td style="color:#166534; font-weight:bold;">${totalPayableDays.toFixed(2)} / 30</td>
+                    <td style="color:#991b1b; font-weight:bold;">${aCount}</td>
+                    <td>
+                        <input type="number" class="salary-input" value="${emp.salary}" placeholder="0" oninput="updateSalary(${index}, this.value)">
+                    </td>
+                    <td style="color:#b91c1c; font-weight:bold; text-align:right;">₹ ${deductionAmount.toFixed(2)}</td>
+                    <td style="color:#15803d; font-weight:bold; text-align:right;">₹ ${netSalary.toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById("totalMonthlySalaryBlock").innerText = `₹ ${grandTotalMonthlySalary.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById("totalDeductionsBlock").innerText = `₹ ${grandTotalDeductions.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById("totalNetPayableBlock").innerText = `₹ ${grandTotalNetPayable.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            document.getElementById("totalMonthlySalaryTable").innerText = `₹ ${grandTotalMonthlySalary.toFixed(2)}`;
+            document.getElementById("totalDeductionsTable").innerText = `₹ ${grandTotalDeductions.toFixed(2)}`;
+            document.getElementById("totalNetPayableTable").innerText = `₹ ${grandTotalNetPayable.toFixed(2)}`;
+        }
+
+        function updateSalary(empIndex, salaryValue) {
+            store[empIndex].salary = salaryValue;
+            savePayrollStorage(false);
+            renderPayrollTable();
+        }
+
+        function addEmployee() {
+            store.push({ name: "New Employee", salary: 30000, attendance: Array(30).fill("P") });
+            savePayrollStorage();
+        }
+
+        function deleteEmployee(index) {
+            store.splice(index, 1);
+            savePayrollStorage();
+        }
+
+        function savePayrollStorage(triggerRender = true) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+            if (triggerRender) {
+                renderAttendanceTable();
+            }
+            renderPayrollTable();
+        }
+
+        function loadPayrollStorage() {
+            const rawData = localStorage.getItem(STORAGE_KEY);
+            if (rawData) {
+                try { store = JSON.parse(rawData); } catch (e) { store = []; }
+            }
+            if (!store || store.length === 0) {
+                store = [
+                    { name: "Alex Mercer", salary: 45000, attendance: Array(30).fill("P") },
+                    { name: "Sarah Jenkins", salary: 52000, attendance: Array(30).fill("P") },
+                    { name: "Michael Chang", salary: 38000, attendance: Array(30).fill("P") }
+                ];
+                savePayrollStorage(false);
+            }
+            renderAttendanceTable();
+            renderPayrollTable();
+        }
+
+        function clearAllData() {
+            if (confirm("Are you sure you want to reset attendance for all days (1-30) to Present (P)?")) {
+                store.forEach(emp => {
+                    emp.attendance = Array(30).fill("P");
+                });
+                savePayrollStorage(true);
+            }
+        }
+
+        function exportAttendanceExcel() {
+            if (store.length === 0) { alert("No employee data to export!"); return; }
+
+            const headers = ["S.NO", "EMPLOYEE NAME"];
+            for (let i = 1; i <= 30; i++) headers.push(`Day ${i}`);
+
+            const data = [headers];
+            store.forEach((emp, idx) => {
+                const row = [idx + 1, emp.name || "—"];
+                for (let d = 0; d < 30; d++) {
+                    row.push(emp.attendance[d] || "P");
+                }
+                data.push(row);
+            });
+
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Register");
+            XLSX.writeFile(workbook, `Attendance_Register_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function exportPayrollExcel() {
+            if (store.length === 0) { alert("No payroll data to export!"); return; }
+
+            const headers = ["S.NO", "EMPLOYEE NAME", "PRESENT (P)", "ON DUTY (OD)", "HALF DAY (HD)", "SHORT LEAVE (SL)", "PAYABLE DAYS", "ABSENT (A)", "MONTHLY SALARY (₹)", "DEDUCTION (₹)", "NET PAYABLE (₹)"];
+            const data = [headers];
+
+            let grandTotalMonthlySalary = 0;
+            let grandTotalDeductions = 0;
+            let grandTotalNetPayable = 0;
+
+            store.forEach((emp, idx) => {
+                let pCount = 0, odCount = 0, hdCount = 0, slCount = 0, aCount = 0;
+                emp.attendance.forEach(status => {
+                    if (status === "P") pCount++;
+                    else if (status === "OD") odCount++;
+                    else if (status === "HD") hdCount++;
+                    else if (status === "SL") slCount++;
+                    else if (status === "A") aCount++;
+                });
+
+                const monthlySalary = parseFloat(emp.salary) || 0;
+                const perDaySalary = monthlySalary / 30;
+                const deductionAmount = perDaySalary * (aCount + (hdCount * 0.5) + (slCount * 0.25));
+                const netSalary = monthlySalary - deductionAmount;
+                const totalPayableDays = pCount + odCount + (hdCount * 0.5) + (slCount * 0.25);
+
+                grandTotalMonthlySalary += monthlySalary;
+                grandTotalDeductions += deductionAmount;
+                grandTotalNetPayable += netSalary;
+
+                data.push([
+                    idx + 1,
+                    emp.name || "—",
+                    pCount,
+                    odCount,
+                    hdCount,
+                    slCount,
+                    `${totalPayableDays.toFixed(2)} / 30`,
+                    aCount,
+                    monthlySalary,
+                    deductionAmount.toFixed(2),
+                    netSalary.toFixed(2)
+                ]);
+            });
+
+            data.push([]);
+            data.push([
+                "", "", "", "", "", "", "", "GRAND TOTAL",
+                grandTotalMonthlySalary.toFixed(2),
+                grandTotalDeductions.toFixed(2),
+                grandTotalNetPayable.toFixed(2)
+            ]);
+
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Payroll Calculation");
+            XLSX.writeFile(workbook, `Payroll_Summary_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        async function exportTestToWord(tabNum) {
+            const titleName = ASSESSMENT_NAMES[tabNum];
+            const total = totalSlidesPerTab[tabNum];
+
+            let evalData = evaluationResultsPerTab[tabNum];
+            if (!evalData) {
+                const answers = {};
+                for (let i = 1; i <= total; i++) {
+                    const fieldKey = `a_${tabNum}_${i}`;
+                    answers[i] = localStorage.getItem(fieldKey) || document.getElementById(fieldKey)?.value || "";
+                }
+                try {
+                    const res = await fetch('http://localhost:5000/api/submit-assessment', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tab_id: tabNum, answers: answers })
+                    });
+                    if (res.ok) {
+                        evalData = await res.json();
+                        evaluationResultsPerTab[tabNum] = evalData;
+                    }
+                } catch (e) {
+                    console.warn("Unable to fetch evaluation scores prior to export.", e);
+                }
+            }
+
+            const totalScore = evalData ? evalData.total_score : 0;
+            const maxScore = evalData ? evalData.max_score : (total * 10);
+            const percentage = evalData ? evalData.percentage : 0;
+            const resultStatus = evalData ? evalData.result : "NEEDS REVIEW";
+            const breakdown = evalData ? evalData.breakdown : {};
+
+            const isPassed = resultStatus === "PASSED";
+            const badgeColor = isPassed ? "#16a34a" : "#dc2626";
+
+            let docHTML = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>${titleName}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.5; color: #0f172a; }
+                        h1 { color: #1e293b; text-align: center; margin-bottom: 5px; }
+                        .meta-info { text-align: center; color: #64748b; font-size: 13px; margin-bottom: 20px; }
+                        
+                        .summary-banner {
+                            border: 2px solid #cbd5e1;
+                            background-color: #f8fafc;
+                            padding: 16px;
+                            border-radius: 8px;
+                            margin-bottom: 24px;
+                        }
+                        .summary-table {
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        .summary-table td {
+                            padding: 8px;
+                            border: none;
+                            text-align: center;
+                            vertical-align: middle;
+                        }
+                        .stat-label { font-weight: bold; font-size: 12px; color: #64748b; text-transform: uppercase; }
+                        .stat-value { font-size: 20px; font-weight: bold; color: #1e293b; margin-top: 4px; }
+                        .result-badge {
+                            display: inline-block;
+                            padding: 6px 16px;
+                            font-weight: bold;
+                            color: #ffffff;
+                            background-color: ${badgeColor};
+                            border-radius: 4px;
+                            font-size: 16px;
+                        }
+
+                        .question-box {
+                            margin-bottom: 24px;
+                            padding: 16px;
+                            border: 1px solid #cbd5e1;
+                            background: #ffffff;
+                            border-radius: 6px;
+                        }
+                        .question-title { font-weight: bold; color: #1e40af; font-size: 15px; }
+                        .score-badge { font-weight: bold; color: #2563eb; font-size: 14px; background: #eff6ff; padding: 4px 8px; border-radius: 4px; border: 1px solid #bfdbfe; }
+                        
+                        .section-title { font-weight: bold; color: #334155; margin-top: 10px; font-size: 13px; }
+                        .answer-content { background: #f8fafc; padding: 10px; border-left: 4px solid #2563eb; margin-top: 4px; white-space: pre-wrap; font-size: 14px; }
+                        .model-content { background: #f0fdf4; padding: 10px; border-left: 4px solid #16a34a; margin-top: 4px; white-space: pre-wrap; font-size: 13px; color: #166534; }
+                        .hr-override-box { margin-top: 12px; padding: 8px; background: #fffbeb; border: 1px dashed #f59e0b; font-size: 12px; }
+                    </style>
+                </head>
+                <body>
+                    <h1>${titleName} Evaluation Report</h1>
+                    <div class="meta-info">Exported on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</div>
+
+                    <!-- SUMMARY BANNER -->
+                    <div class="summary-banner">
+                        <table class="summary-table">
+                            <tr>
+                                <td>
+                                    <div class="stat-label">Total Score</div>
+                                    <div class="stat-value">${totalScore} / ${maxScore}</div>
+                                </td>
+                                <td>
+                                    <div class="stat-label">Percentage</div>
+                                    <div class="stat-value">${percentage}%</div>
+                                </td>
+                                <td>
+                                    <div class="stat-label">Assessment Result</div>
+                                    <div style="margin-top: 4px;"><span class="result-badge">${resultStatus}</span></div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid #cbd5e1; margin-bottom: 24px;" />
+            `;
+
+            for (let i = 1; i <= total; i++) {
+                const questionElem = document.getElementById(`q_${tabNum}_${i}`);
+                const answerKey = `a_${tabNum}_${i}`;
+                const answerVal = localStorage.getItem(answerKey) || document.getElementById(answerKey)?.value || "No Answer Provided";
+                const questionText = questionElem ? questionElem.value : `Question ${i}`;
+
+                const qEval = breakdown[String(i)] || breakdown[i] || {};
+                const qScore = qEval.score_awarded !== undefined ? qEval.score_awarded : 0;
+                const qMax = qEval.max_score !== undefined ? qEval.max_score : 10;
+                const modelAns = qEval.answer_key || "";
+                const autoFeedback = qEval.feedback || "";
+
+                docHTML += `
+                    <div class="question-box">
+                        <table style="width:100%; margin-bottom: 8px;">
+                            <tr>
+                                <td style="text-align:left;" class="question-title">Question ${i}: ${questionText}</td>
+                                <td style="text-align:right; width:180px;" class="score-badge">Score Awarded: ${qScore} / ${qMax}</td>
+                            </tr>
+                        </table>
+
+                        <div class="section-title">Candidate's Submitted Answer:</div>
+                        <div class="answer-content">${answerVal.replace(/\n/g, '<br/>')}</div>
+
+                        ${modelAns ? `
+                            <div class="section-title">Reference / Model Answer Key:</div>
+                            <div class="model-content">${modelAns.replace(/\n/g, '<br/>')}</div>
+                        ` : ''}
+
+                        <!-- HR RE-EVALUATION / OVERRIDE BLOCK -->
+                        <div class="hr-override-box">
+                            <strong>System Feedback:</strong> ${autoFeedback}<br/>
+                            <strong>HR Re-evaluation Score:</strong> [ ____ / ${qMax} ] &nbsp;&nbsp;&nbsp;&nbsp; <strong>HR Signature/Notes:</strong> ______________________
+                        </div>
+                    </div>
+                `;
+            }
+
+            docHTML += `</body></html>`;
+
+            const converted = htmlDocx.asBlob(docHTML);
+            saveAs(converted, `${titleName.replace(/\s+/g, '_')}_Report_${new Date().toISOString().split('T')[0]}.docx`);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCarousels();
+            loadPayrollStorage();
+        });
+    </script>
+</body>
+
+</html>

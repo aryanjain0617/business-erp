@@ -1,0 +1,2488 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Document, Invoice Suite & Asset Tracker (10 Zones)</title>
+
+    <!-- Global External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <!-- Zone 9 & Zone 10 Libraries (Tailwind CSS & FontAwesome) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* GLOBAL & NAVIGATION TAB STYLES */
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f3f6;
+            color: #2c3e50;
+        }
+
+        .tab-navigation-bar {
+            display: flex;
+            background-color: #1e293b;
+            padding: 10px 10px 0 10px;
+            overflow-x: auto;
+            border-bottom: 3px solid #3b82f6;
+        }
+
+        .tab-button {
+            background-color: #334155;
+            color: #94a3b8;
+            border: none;
+            outline: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            margin-right: 5px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            background-color: #475569;
+            color: #ffffff;
+        }
+
+        .tab-button.active {
+            background-color: #f0f3f6;
+            color: #1e293b;
+            border-bottom: 3px solid #f0f3f6;
+        }
+
+        /* Specific tab active state when Zone 9 & 10 (Dark Mode) are active */
+        .tab-button.active-dark {
+            background-color: #0f172a;
+            color: #3b82f6;
+            border-bottom: 3px solid #3b82f6;
+        }
+
+        .tab-content-container {
+            padding: 20px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* SHARED / COMMON STYLES ACROSS ZONES 1-8 */
+        .container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+        }
+
+        .editor-side,
+        .preview-side {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .invoice-paper {
+            border: 1px solid #ccc;
+            padding: 20px;
+            background: white;
+            font-size: 13px;
+        }
+
+        .invoice-paper h3 {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+        }
+
+        .invoice-paper table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .invoice-paper td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        .clear-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Topnav Toolbar Styles for Editors */
+        .topnav {
+            overflow: hidden;
+            background-color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+            gap: 10px;
+            align-items: center;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .topnav a,
+        .topnav button,
+        .topnav select {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: none;
+            background-color: #f2f2f2;
+            color: #333;
+            text-decoration: none !important;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .topnav button.image-btn {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        .topnav button.clear-btn {
+            background-color: #e74c3c;
+            color: white;
+            font-weight: bold;
+        }
+
+        .page-container {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .editor-paper {
+            background-color: white;
+            width: 8.5in;
+            min-height: 11in;
+            padding: 1in;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .editor-paper img {
+            max-width: 100%;
+            height: auto;
+            margin: 10px 0;
+            display: inline-block;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            max-width: 90%;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .cropper-container-wrapper {
+            max-height: 400px;
+            background-color: #f7f7f7;
+            margin-bottom: 15px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cropper-container-wrapper img {
+            max-width: 100%;
+            max-height: 350px;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Control Center Specifics */
+        .app-container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .upload-card {
+            border: 3px dashed #cbd5e1;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .preview-wrapper {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .meta-layout-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item-card {
+            background: #ffffff;
+            padding: 12px 18px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .meta-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            font-size: 15px;
+            color: #0f172a;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .data-table-view {
+            width: 100%;
+            border-collapse: collapse;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .data-table-view th,
+        .data-table-view td {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .data-table-view th {
+            background-color: #1e293b;
+            color: #ffffff;
+        }
+
+        .hidden-element {
+            display: none !important;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: #1a1e24;
+            color: #ffffff;
+            font-family: sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            margin: 15px 20px;
+        }
+
+        .btn-back:hover {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        /* ZONE 9 SPECIFIC ISOLATED STYLES */
+        #zone9 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: -20px;
+            padding: 20px;
+            border-radius: 0 0 12px 12px;
+        }
+
+        #zone9 .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #zone9 .glass-input {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        #zone9 .glass-input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+        }
+
+        #zone9 ::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+        }
+
+        /* ZONE 10 SPECIFIC STYLES (ASSET SECURITY TRACKER) */
+        #zone10 {
+            --z10-bg: #0f172a;
+            --z10-card-bg: #1e293b;
+            --z10-text: #f8fafc;
+            --z10-text-dim: #94a3b8;
+            --z10-accent: #3b82f6;
+            --z10-accent-hover: #2563eb;
+            --z10-border: #334155;
+            --z10-success: #10b981;
+            --z10-warning: #f59e0b;
+            --z10-danger: #ef4444;
+
+            background-color: var(--z10-bg);
+            color: var(--z10-text);
+            margin: -20px;
+            padding: 20px;
+            border-radius: 0 0 12px 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        #zone10 .z10-container {
+            max-width: 1250px;
+            margin: 0 auto;
+        }
+
+        #zone10 header {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--z10-border);
+            padding-bottom: 16px;
+        }
+
+        #zone10 h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        #zone10 .subtitle {
+            color: var(--z10-text-dim);
+            font-size: 0.875rem;
+        }
+
+        #zone10 .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        #zone10 .metric-card {
+            background: var(--z10-card-bg);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--z10-border);
+        }
+
+        #zone10 .metric-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        #zone10 .metric-label {
+            font-size: 0.75rem;
+            color: var(--z10-text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        #zone10 .controls {
+            background: var(--z10-card-bg);
+            padding: 16px;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid var(--z10-border);
+            border-bottom: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #zone10 .search-filter {
+            display: flex;
+            gap: 12px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        #zone10 input,
+        #zone10 select {
+            background: var(--z10-bg);
+            color: var(--z10-text);
+            border: 1px solid var(--z10-border);
+            padding: 8px 12px;
+            border-radius: 6px;
+            outline: none;
+            font-size: 0.875rem;
+            color-scheme: dark;
+        }
+
+        #zone10 input:focus,
+        #zone10 select:focus {
+            border-color: var(--z10-accent);
+        }
+
+        #zone10 input[type="text"] {
+            width: 100%;
+        }
+
+        #zone10 .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        #zone10 .btn {
+            background: var(--z10-accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: background 0.2s;
+        }
+
+        #zone10 .btn:hover {
+            background: var(--z10-accent-hover);
+        }
+
+        #zone10 .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--z10-border);
+            color: var(--z10-text);
+        }
+
+        #zone10 .btn-secondary:hover {
+            background: var(--z10-border);
+        }
+
+        #zone10 .btn-danger {
+            background: transparent;
+            border: 1px solid var(--z10-danger);
+            color: var(--z10-danger);
+        }
+
+        #zone10 .btn-danger:hover {
+            background: var(--z10-danger);
+            color: white;
+        }
+
+        #zone10 .btn-sm {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+        }
+
+        #zone10 .btn-edit {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
+        #zone10 .btn-edit:hover {
+            background: var(--z10-accent);
+            color: white;
+        }
+
+        #zone10 .btn-del {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--z10-danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        #zone10 .btn-del:hover {
+            background: var(--z10-danger);
+            color: white;
+        }
+
+        #zone10 .action-group {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        #zone10 .table-container {
+            background: var(--z10-card-bg);
+            border-radius: 0 0 8px 8px;
+            border: 1px solid var(--z10-border);
+            overflow-x: auto;
+        }
+
+        #zone10 table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        #zone10 th {
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--z10-text-dim);
+            padding: 12px 16px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--z10-border);
+        }
+
+        #zone10 td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--z10-border);
+        }
+
+        #zone10 tr:last-child td {
+            border-bottom: none;
+        }
+
+        #zone10 tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        #zone10 .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        #zone10 .badge-in {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--z10-success);
+        }
+
+        #zone10 .badge-out {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--z10-warning);
+        }
+
+        #zone10 .badge-overdue {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--z10-danger);
+        }
+
+        #zone10 .badge-maint {
+            background: rgba(148, 163, 184, 0.15);
+            color: var(--z10-text-dim);
+        }
+
+        #zone10 .z10-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        #zone10 .z10-modal {
+            background: var(--z10-card-bg);
+            width: 100%;
+            max-width: 500px;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--z10-border);
+        }
+
+        #zone10 .z10-modal-header {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        #zone10 .z10-form-group {
+            margin-bottom: 14px;
+        }
+
+        #zone10 .z10-form-group label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--z10-text-dim);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        #zone10 .z10-form-group input,
+        #zone10 .z10-form-group select {
+            width: 100%;
+        }
+
+        #zone10 .z10-form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        #zone10 .z10-form-row .z10-form-group {
+            flex: 1;
+        }
+
+        #zone10 .z10-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        @media print {
+
+            .tab-navigation-bar,
+            .topnav,
+            .upload-card,
+            .modal-overlay,
+            .btn-back,
+            button {
+                display: none !important;
+            }
+
+            .editor-paper {
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Back Button -->
+    <a href="index.html" class="btn-back">
+        <span>←</span> Back to Dashboard
+    </a>
+
+    <!-- NAV TABS HEADER (10 TABS TOTAL) -->
+    <div class="tab-navigation-bar">
+        <button class="tab-button active" onclick="openTab(event, 'zone1')">Zone 1: Editor Invoice</button>
+        <button class="tab-button" onclick="openTab(event, 'zone2')">Zone 2: Lease Editor</button>
+        <button class="tab-button" onclick="openTab(event, 'zone3')">Zone 3: New Invoice Generator</button>
+        <button class="tab-button" onclick="openTab(event, 'zone4')">Zone 4: New Lease Generator</button>
+        <button class="tab-button" onclick="openTab(event, 'zone5')">Zone 5: Recurring Invoices Generator</button>
+        <button class="tab-button" onclick="openTab(event, 'zone6')">Zone 6: Broker Editor Invoice</button>
+        <button class="tab-button" onclick="openTab(event, 'zone7')">Zone 7: Broker New Invoice Generator</button>
+        <button class="tab-button" onclick="openTab(event, 'zone8')">Zone 8: Broker Recurring Invoices
+            Generator</button>
+        <button class="tab-button" onclick="openTab(event, 'zone9')">Zone 9: Agent Scheduling Hub</button>
+        <button class="tab-button" onclick="openTab(event, 'zone10')">Zone 10: Asset Security Tracker</button>
+    </div>
+
+    <div class="tab-content-container">
+
+        <!-- ZONE 1: Editor Invoice -->
+        <div id="zone1" class="tab-panel active">
+            <h2 style="text-align:center;">Zone 1: Editor Invoice</h2>
+            <div class="container">
+                <div class="editor-side">
+                    <h2>Invoice Editor</h2>
+                    <div class="form-group">
+                        <label>Upload Template (.docx):</label>
+                        <input type="file" id="z1_template_file" accept=".docx">
+                        <p style="margin:8px 0 0 0; color:#475569; font-size:12px;">Use labels/placeholders like
+                            <code>{{invoice_no}}</code>, <code>{{party_name}}</code>.
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>Client Name:</label>
+                        <input type="text" id="z1_client_name" placeholder="e.g. TOP Technologies Pvt. Ltd.">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number:</label>
+                        <input type="text" id="z1_invoice_no" placeholder="e.g. 05/SPPL/26-27">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Date:</label>
+                        <input type="date" id="z1_invoice_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Rent Period:</label>
+                        <input type="text" id="z1_period" placeholder="e.g. 16th July – 15th August">
+                    </div>
+                    <div class="form-group">
+                        <label>Area (sqft):</label>
+                        <input type="number" id="z1_area" placeholder="11815">
+                    </div>
+                    <div class="form-group">
+                        <label>Rate per Sqft:</label>
+                        <input type="number" id="z1_rate" placeholder="80.5">
+                    </div>
+
+                    <button onclick="z1_showPreview()"
+                        style="width:100%; padding:12px; background:#3498db; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Preview
+                        Full Invoice</button>
+
+                    <div class="action-row">
+                        <button onclick="resetTab()" class="clear-btn" style="flex: 1;">Clear / Refresh</button>
+                    </div>
+                </div>
+
+                <div class="preview-side" id="z1_previewArea" style="display:none;">
+                    <div class="invoice-paper">
+                        <h3>TAX INVOICE</h3>
+                        <p><strong>Client:</strong> <span id="z1_p_client">TOP Technologies Pvt. Ltd.</span></p>
+                        <p><strong>Invoice No:</strong> <span id="z1_p_no"></span></p>
+                        <p><strong>Invoice Date:</strong> <span id="z1_p_date"></span></p>
+                        <p><strong>Rent Period:</strong> <span id="z1_p_period"></span></p>
+                        <table>
+                            <tr>
+                                <td><strong>Description</strong></td>
+                                <td><strong>Value</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Area (sqft)</td>
+                                <td id="z1_p_area"></td>
+                            </tr>
+                            <tr>
+                                <td>Rate/Sqft</td>
+                                <td id="z1_p_rate"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Grand Total</strong></td>
+                                <td><strong><span id="z1_p_total"></span></strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <button onclick="z1_generateDoc()"
+                        style="width:100%; padding:12px; background:#27ae60; color:white; border:none; border-radius:5px; cursor:pointer; margin-top:15px; font-weight:bold;">Confirm
+                        & Generate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 2: Lease Editor -->
+        <div id="zone2" class="tab-panel">
+            <h2 style="text-align:center;">Zone 2: Lease Editor</h2>
+            <div class="topnav">
+                <button onclick="document.execCommand('bold', false, null)"><b>B</b></button>
+                <button onclick="document.execCommand('italic', false, null)"><i>I</i></button>
+                <button onclick="document.execCommand('underline', false, null)"><u>U</u></button>
+                <select onchange="document.execCommand('fontSize', false, this.value)">
+                    <option value="3">Normal</option>
+                    <option value="5">Large</option>
+                    <option value="7">Huge</option>
+                </select>
+                <button onclick="window.print()">Print/PDF</button>
+                <button onclick="z2_triggerImageUpload()" class="image-btn">+ Insert Image</button>
+                <input type="file" id="z2_imageInput" accept="image/*" style="display: none;"
+                    onchange="z2_handleImageSelection(event)">
+                <button onclick="resetTab()" class="clear-btn">Clear / Reset</button>
+            </div>
+
+            <div
+                style="text-align: center; padding: 15px; background: #fff; margin: 10px auto; width: 8.5in; box-sizing: border-box;">
+                <input type="file" id="z2_invoiceFile" accept=".docx">
+                <button id="z2_uploadButton" style="padding: 6px 12px;">Upload & Edit</button>
+            </div>
+
+            <div class="page-container">
+                <div id="z2_editor" class="editor-paper" contenteditable="true">
+                    <h1>Edit Your Lease</h1>
+                    <p>Upload a .docx file to begin...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 3: New Invoice Generator -->
+        <div id="zone3" class="tab-panel">
+            <h2 style="text-align:center;">Zone 3: New Invoice Generator</h2>
+            <div class="container">
+                <div class="editor-side">
+                    <h2>New Invoice</h2>
+                    <div class="form-group">
+                        <label>Upload Template (.docx):</label>
+                        <input type="file" id="z3_templateFile" accept=".docx">
+                    </div>
+                    <div class="form-group">
+                        <label>Client Name:</label>
+                        <input type="text" id="z3_client_name">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number:</label>
+                        <input type="text" id="z3_invoice_no">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Date:</label>
+                        <input type="date" id="z3_invoice_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Rent Period:</label>
+                        <input type="text" id="z3_period">
+                    </div>
+                    <div class="form-group">
+                        <label>Area (sqft):</label>
+                        <input type="number" id="z3_area" placeholder="11815">
+                    </div>
+                    <div class="form-group">
+                        <label>Rate per Sqft:</label>
+                        <input type="number" id="z3_rate" placeholder="80.5">
+                    </div>
+
+                    <button onclick="z3_showPreview()"
+                        style="width:100%; padding:12px; background:#3498db; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Preview
+                        Full Invoice</button>
+
+                    <div class="action-row">
+                        <button onclick="resetTab()" class="clear-btn" style="flex: 1;">Clear / Refresh</button>
+                    </div>
+                </div>
+
+                <div class="preview-side" id="z3_previewArea" style="display:none;">
+                    <div class="invoice-paper">
+                        <h3>TAX INVOICE</h3>
+                        <p><strong>To:</strong> <span id="z3_p_client"></span></p>
+                        <p><strong>Invoice No:</strong> <span id="z3_p_no"></span></p>
+                        <p><strong>Invoice Date:</strong> <span id="z3_p_date"></span></p>
+                        <p><strong>Rent Period:</strong> <span id="z3_p_period"></span></p>
+                        <table>
+                            <tr>
+                                <td><strong>Description</strong></td>
+                                <td><strong>Value</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Area (sqft)</td>
+                                <td id="z3_p_area"></td>
+                            </tr>
+                            <tr>
+                                <td>Rate/Sqft</td>
+                                <td id="z3_p_rate"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Grand Total</strong></td>
+                                <td><strong><span id="z3_p_total"></span></strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <button onclick="z3_generateDoc()"
+                        style="width:100%; padding:12px; background:#27ae60; color:white; border:none; border-radius:5px; cursor:pointer; margin-top:15px; font-weight:bold;">Confirm
+                        & Generate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 4: New Lease Generator -->
+        <div id="zone4" class="tab-panel">
+            <h2 style="text-align:center;">Zone 4: New Lease Generator</h2>
+            <div class="topnav">
+                <button onclick="document.execCommand('bold', false, null)"><b>B</b></button>
+                <button onclick="document.execCommand('italic', false, null)"><i>I</i></button>
+                <button onclick="document.execCommand('underline', false, null)"><u>U</u></button>
+                <select onchange="document.execCommand('fontSize', false, this.value)">
+                    <option value="3">Normal</option>
+                    <option value="5">Large</option>
+                    <option value="7">Huge</option>
+                </select>
+                <button onclick="window.print()">Print/PDF</button>
+                <button onclick="z4_triggerImageUpload()" class="image-btn">+ Insert Image</button>
+                <input type="file" id="z4_imageInput" accept="image/*" style="display: none;"
+                    onchange="z4_handleImageSelection(event)">
+                <button onclick="resetTab()" class="clear-btn">Clear / Reset</button>
+            </div>
+
+            <div class="page-container">
+                <div id="z4_editor" class="editor-paper" contenteditable="true">
+                    <h1>New Lease</h1>
+                    <p>Start typing your document here...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 5: Recurring Invoices Generator -->
+        <div id="zone5" class="tab-panel">
+            <div class="app-container">
+                <h1>⚡ Recurring Invoices Generator</h1>
+
+                <div class="upload-card">
+                    <h3 style="margin:0 0 10px 0;">1. Ingest Word Template Document</h3>
+                    <p style="margin:0; color:#64748b; font-size:14px;">Select last month's official finalized .docx
+                        statement to shift parameters.</p>
+                    <input type="file" id="z5_invoiceFile" style="margin:15px 0;" accept=".docx"><br>
+                    <button
+                        style="background:#3b82f6; color:white; border:none; border-radius:6px; padding:10px 20px; cursor:pointer; font-weight:bold;"
+                        onclick="z5_triggerAutomationPipeline()">Extract & Shift Parameters</button>
+                </div>
+
+                <div id="z5_previewBlock" class="preview-wrapper hidden-element">
+                    <h2 style="font-size: 18px; margin-top:0;">2. Verify Computed Target Cycle Values</h2>
+
+                    <div class="meta-layout-grid">
+                        <div class="meta-item-card">
+                            <div class="meta-label">Billed Corporate Party</div>
+                            <div class="meta-value" id="z5_field_party"></div>
+                        </div>
+                        <div class="meta-item-card">
+                            <div class="meta-label">Target Lease Period</div>
+                            <div class="meta-value" id="z5_field_period"></div>
+                        </div>
+                        <div class="meta-item-card">
+                            <div class="meta-label">Computed Serial Identifier</div>
+                            <div class="meta-value" id="z5_field_serial" style="color:#2563eb;"></div>
+                        </div>
+                        <div class="meta-item-card">
+                            <div class="meta-label">Shifted Release Date</div>
+                            <div class="meta-value" id="z5_field_date" style="color:#2563eb;"></div>
+                        </div>
+                    </div>
+
+                    <table class="data-table-view">
+                        <thead>
+                            <tr>
+                                <th>Particulars Breakdown</th>
+                                <th>Basic Valuation (Rs)</th>
+                                <th>CGST Amount</th>
+                                <th>SGST Amount</th>
+                                <th>Total Remittance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Unit Nos 503, 505 & 506 (11,815 sqft)</td>
+                                <td id="z5_table_base"></td>
+                                <td id="z5_table_cgst"></td>
+                                <td id="z5_table_sgst"></td>
+                                <td id="z5_table_grand" style="font-weight:700;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <button
+                        style="background:#10b981; color:white; border:none; border-radius:6px; width:100%; margin-top:20px; padding:12px; cursor:pointer; font-weight:bold;"
+                        onclick="z5_commitAndBuildWordDoc()">Approve Parameters & Download Next Invoice</button>
+                </div>
+
+                <div
+                    style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="margin:0; color:#1e40af;">3. Tally Accounting Sync Platform</h3>
+                        <p style="margin:5px 0 0 0; color:#1e3a8a; font-size:13px;">Compile all processed session
+                            histories into spreadsheet configuration ledger.</p>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button
+                            style="background:#3b82f6; color:white; border:none; border-radius:6px; padding:10px 20px; cursor:pointer; font-weight:bold;"
+                            onclick="z5_downloadTallyLedgerData()">Export Tally Sheet</button>
+                        <button
+                            style="background:#ef4444; color:white; border:none; border-radius:6px; padding:10px 20px; cursor:pointer; font-weight:bold;"
+                            onclick="resetTab()">Clear / Refresh</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 6: Broker Editor Invoice -->
+        <div id="zone6" class="tab-panel">
+            <h2 style="text-align:center;">Zone 6: Broker Editor Invoice</h2>
+            <div class="container">
+                <div class="editor-side">
+                    <h2>Invoice Editor</h2>
+                    <div class="form-group">
+                        <label>Upload Template (.docx):</label>
+                        <input type="file" id="z6_template_file" accept=".docx">
+                        <p style="margin:8px 0 0 0; color:#475569; font-size:12px;">Use labels/placeholders like
+                            <code>{{invoice_no}}</code>, <code>{{party_name}}</code>.
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>Client Name:</label>
+                        <input type="text" id="z6_client_name" placeholder="e.g. TOP Technologies Pvt. Ltd.">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number:</label>
+                        <input type="text" id="z6_invoice_no" placeholder="e.g. 05/SPPL/26-27">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Date:</label>
+                        <input type="date" id="z6_invoice_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Rent Period:</label>
+                        <input type="text" id="z6_period" placeholder="e.g. 16th July – 15th August">
+                    </div>
+                    <div class="form-group">
+                        <label>Area (sqft):</label>
+                        <input type="number" id="z6_area" placeholder="11815">
+                    </div>
+                    <div class="form-group">
+                        <label>Rate per Sqft:</label>
+                        <input type="number" id="z6_rate" placeholder="80.5">
+                    </div>
+
+                    <button onclick="z6_showPreview()"
+                        style="width:100%; padding:12px; background:#3498db; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Preview
+                        Full Invoice</button>
+
+                    <div class="action-row">
+                        <button onclick="resetTab()" class="clear-btn" style="flex: 1;">Clear / Refresh</button>
+                    </div>
+                </div>
+
+                <div class="preview-side" id="z6_previewArea" style="display:none;">
+                    <div class="invoice-paper">
+                        <h3>TAX INVOICE</h3>
+                        <p><strong>Client:</strong> <span id="z6_p_client">TOP Technologies Pvt. Ltd.</span></p>
+                        <p><strong>Invoice No:</strong> <span id="z6_p_no"></span></p>
+                        <p><strong>Invoice Date:</strong> <span id="z6_p_date"></span></p>
+                        <p><strong>Rent Period:</strong> <span id="z6_p_period"></span></p>
+                        <table>
+                            <tr>
+                                <td><strong>Description</strong></td>
+                                <td><strong>Value</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Area (sqft)</td>
+                                <td id="z6_p_area"></td>
+                            </tr>
+                            <tr>
+                                <td>Rate/Sqft</td>
+                                <td id="z6_p_rate"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Grand Total</strong></td>
+                                <td><strong><span id="z6_p_total"></span></strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <button onclick="z6_generateDoc()"
+                        style="width:100%; padding:12px; background:#27ae60; color:white; border:none; border-radius:5px; cursor:pointer; margin-top:15px; font-weight:bold;">Confirm
+                        & Generate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 7: Broker New Invoice Generator -->
+        <div id="zone7" class="tab-panel">
+            <h2 style="text-align:center;">Zone 7: Broker New Invoice Generator</h2>
+            <div class="container">
+                <div class="editor-side">
+                    <h2>New Invoice</h2>
+                    <div class="form-group">
+                        <label>Upload Template (.docx):</label>
+                        <input type="file" id="z7_templateFile" accept=".docx">
+                    </div>
+                    <div class="form-group">
+                        <label>Client Name:</label>
+                        <input type="text" id="z7_client_name">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Number:</label>
+                        <input type="text" id="z7_invoice_no">
+                    </div>
+                    <div class="form-group">
+                        <label>Invoice Date:</label>
+                        <input type="date" id="z7_invoice_date">
+                    </div>
+                    <div class="form-group">
+                        <label>Rent Period:</label>
+                        <input type="text" id="z7_period">
+                    </div>
+                    <div class="form-group">
+                        <label>Area (sqft):</label>
+                        <input type="number" id="z7_area" placeholder="11815">
+                    </div>
+                    <div class="form-group">
+                        <label>Rate per Sqft:</label>
+                        <input type="number" id="z7_rate" placeholder="80.5">
+                    </div>
+
+                    <button onclick="z7_showPreview()"
+                        style="width:100%; padding:12px; background:#3498db; color:white; border:none; border-radius:5px; cursor:pointer; font-weight:bold;">Preview
+                        Full Invoice</button>
+
+                    <div class="action-row">
+                        <button onclick="resetTab()" class="clear-btn" style="flex: 1;">Clear / Refresh</button>
+                    </div>
+                </div>
+
+                <div class="preview-side" id="z7_previewArea" style="display:none;">
+                    <div class="invoice-paper">
+                        <h3>TAX INVOICE</h3>
+                        <p><strong>To:</strong> <span id="z7_p_client"></span></p>
+                        <p><strong>Invoice No:</strong> <span id="z7_p_no"></span></p>
+                        <p><strong>Invoice Date:</strong> <span id="z7_p_date"></span></p>
+                        <p><strong>Rent Period:</strong> <span id="z7_p_period"></span></p>
+                        <table>
+                            <tr>
+                                <td><strong>Description</strong></td>
+                                <td><strong>Value</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Area (sqft)</td>
+                                <td id="z7_p_area"></td>
+                            </tr>
+                            <tr>
+                                <td>Rate/Sqft</td>
+                                <td id="z7_p_rate"></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Grand Total</strong></td>
+                                <td><strong><span id="z7_p_total"></span></strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <button onclick="z7_generateDoc()"
+                        style="width:100%; padding:12px; background:#27ae60; color:white; border:none; border-radius:5px; cursor:pointer; margin-top:15px; font-weight:bold;">Confirm
+                        & Generate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 8: Broker Recurring Invoices Generator -->
+        <div id="zone8" class="tab-panel">
+            <div class="app-container">
+                <h1>⚡ Broker Recurring Invoices Generator</h1>
+
+                <div class="upload-card">
+                    <h3 style="margin:0 0 10px 0;">1. Ingest Word Template Document</h3>
+                    <p style="margin:0; color:#64748b; font-size:14px;">Select last month's official finalized .docx
+                        statement to shift parameters.</p>
+                    <input type="file" id="z8_invoiceFile" style="margin:15px 0;" accept=".docx"><br>
+                    <button
+                        style="background:#3b82f6; color:white; border:none; border-radius:6px; padding:10px 20px; cursor:pointer; font-weight:bold;"
+                        onclick="z8_triggerAutomationPipeline()">Extract & Shift Parameters</button>
+                </div>
+
+                <div id="z8_previewBlock" class="preview-wrapper hidden-element">
+                    <h2 style="font-size: 18px; margin-top:0;">2. Verify Computed Target Cycle Values</h2>
+
+                    <div class="meta-layout-grid">
+                        <div class="meta-item-card">
+                            <div class="meta-label">Billed Corporate Party</div>
+                            <div class="meta-value" id="z8_field_party"></div>
+                        </div>
+                        <div class="meta-item-card">
+                            <div class="meta-label">Target Lease Period</div>
+                            <div class="meta-value" id="z8_field_period"></div>
+                        </div>
+                        <div class="meta-item-card">
+                            <div class="meta-label">Computed Serial Identifier</div>
+                            <div class="meta-value" id="z8_field_serial" style="color:#2563eb;"></div>
+                        </div>
+                        <div class="meta-item-card">
+                            <div class="meta-label">Shifted Release Date</div>
+                            <div class="meta-value" id="z8_field_date" style="color:#2563eb;"></div>
+                        </div>
+                    </div>
+
+                    <table class="data-table-view">
+                        <thead>
+                            <tr>
+                                <th>Particulars Breakdown</th>
+                                <th>Basic Valuation (Rs)</th>
+                                <th>CGST Amount</th>
+                                <th>SGST Amount</th>
+                                <th>Total Remittance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Unit Nos 503, 505 & 506 (11,815 sqft)</td>
+                                <td id="z8_table_base"></td>
+                                <td id="z8_table_cgst"></td>
+                                <td id="z8_table_sgst"></td>
+                                <td id="z8_table_grand" style="font-weight:700;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <button
+                        style="background:#10b981; color:white; border:none; border-radius:6px; width:100%; margin-top:20px; padding:12px; cursor:pointer; font-weight:bold;"
+                        onclick="z8_commitAndBuildWordDoc()">Approve Parameters & Download Next Invoice</button>
+                </div>
+
+                <div
+                    style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h3 style="margin:0; color:#1e40af;">3. Tally Accounting Sync Platform</h3>
+                        <p style="margin:5px 0 0 0; color:#1e3a8a; font-size:13px;">Compile all processed session
+                            histories into spreadsheet configuration ledger.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button
+                            style="background:#3b82f6; color:white; border:none; border-radius:6px; padding:10px 20px; cursor:pointer; font-weight:bold;"
+                            onclick="z8_downloadTallyLedgerData()">Export Tally Sheet</button>
+                        <button
+                            style="background:#ef4444; color:white; border:none; border-radius:6px; padding:10px 20px; cursor:pointer; font-weight:bold;"
+                            onclick="resetTab()">Clear / Refresh</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE 9: Agent Scheduling Hub -->
+        <div id="zone9" class="tab-panel">
+            <header class="glass-panel sticky top-0 z-50 border-b border-slate-800 px-6 py-4 mb-8 rounded-2xl">
+                <div class="max-w-7xl mx-auto flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-blue-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/30">
+                            <i class="fa-solid fa-building-user text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="font-bold text-xl tracking-wide text-white">Apex Real Estate</h1>
+                            <p class="text-xs text-slate-400">Agent Scheduling & Operations Platform</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button type="button" onclick="exportAppointmentsToExcel()"
+                            class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg transition-all">
+                            <i class="fa-solid fa-file-excel mr-2"></i>Export Excel
+                        </button>
+                        <span
+                            class="text-xs px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Agent Online
+                        </span>
+                        <div
+                            class="w-10 h-10 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center font-bold text-blue-400">
+                            RA
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto px-2 sm:px-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="glass-panel p-5 rounded-2xl flex items-center space-x-4">
+                        <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl">
+                            <i class="fa-solid fa-calendar-check text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Total Scheduled</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="statTotal">0</h3>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl flex items-center space-x-4">
+                        <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
+                            <i class="fa-solid fa-location-dot text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Site Visits</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="statSiteVisits">0</h3>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl flex items-center space-x-4">
+                        <div class="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
+                            <i class="fa-solid fa-briefcase text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Office Meetings</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="statOfficeMeetings">0</h3>
+                        </div>
+                    </div>
+                    <div class="glass-panel p-5 rounded-2xl flex items-center space-x-4">
+                        <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                            <i class="fa-solid fa-user-shield text-2xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Managers & Owners</p>
+                            <h3 class="text-2xl font-bold text-white mt-1" id="statContacts">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-5">
+                        <div class="glass-panel p-6 rounded-2xl shadow-2xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl"></div>
+
+                            <div class="flex items-center space-x-3 mb-6 border-b border-slate-800 pb-4">
+                                <i class="fa-solid fa-calendar-plus text-blue-400 text-lg"></i>
+                                <h2 class="text-lg font-bold text-white">Schedule New Session</h2>
+                            </div>
+
+                            <form id="appointmentForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-2 font-medium">Meeting Format</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="meetingType" value="Site Visit" checked
+                                                class="peer hidden" onchange="toggleLocationInput()">
+                                            <div
+                                                class="p-3 text-center rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 peer-checked:border-blue-500 peer-checked:bg-blue-500/10 peer-checked:text-blue-400 transition-all">
+                                                <i class="fa-solid fa-house-circle-check mb-1 block text-base"></i>
+                                                <span class="text-xs font-semibold">Site Visit</span>
+                                            </div>
+                                        </label>
+                                        <label class="cursor-pointer">
+                                            <input type="radio" name="meetingType" value="Office Meeting"
+                                                class="peer hidden" onchange="toggleLocationInput()">
+                                            <div
+                                                class="p-3 text-center rounded-xl border border-slate-700 bg-slate-800/50 text-slate-300 peer-checked:border-blue-500 peer-checked:bg-blue-500/10 peer-checked:text-blue-400 transition-all">
+                                                <i class="fa-solid fa-handshake mb-1 block text-base"></i>
+                                                <span class="text-xs font-semibold">Office Meeting</span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">Meeting With</label>
+                                    <select id="stakeholderRole" required
+                                        class="w-full glass-input p-3 rounded-xl text-sm">
+                                        <option value="Property Owner">Property Owner</option>
+                                        <option value="Property Manager">Property Manager</option>
+                                    </select>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Contact
+                                            Name</label>
+                                        <input type="text" id="contactName" placeholder="e.g. Eleanor Vance" required
+                                            class="w-full glass-input p-3 rounded-xl text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Phone
+                                            Number</label>
+                                        <input type="tel" id="contactPhone" placeholder="+1 (555) 019-2834" required
+                                            class="w-full glass-input p-3 rounded-xl text-sm">
+                                    </div>
+                                </div>
+
+                                <div id="locationWrapper">
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium"
+                                        id="locationLabel">Property Address / Location</label>
+                                    <input type="text" id="propertyLocation"
+                                        placeholder="742 Evergreen Terrace, Suite 4B" required
+                                        class="w-full glass-input p-3 rounded-xl text-sm">
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Date</label>
+                                        <input type="date" id="appointmentDate" required
+                                            class="w-full glass-input p-3 rounded-xl text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-slate-400 mb-1.5 font-medium">Time</label>
+                                        <input type="time" id="appointmentTime" required
+                                            class="w-full glass-input p-3 rounded-xl text-sm">
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1.5 font-medium">Agenda /
+                                        Notes</label>
+                                    <textarea id="notes" rows="3"
+                                        placeholder="Key discussion points, contract terms, or property walkthrough focus..."
+                                        class="w-full glass-input p-3 rounded-xl text-sm"></textarea>
+                                </div>
+
+                                <button type="submit"
+                                    class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center space-x-2">
+                                    <i class="fa-solid fa-calendar-check"></i>
+                                    <span>Confirm & Schedule</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-7">
+                        <div class="glass-panel p-6 rounded-2xl shadow-2xl min-h-[600px] flex flex-col">
+                            <div
+                                class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fa-solid fa-list-check text-blue-400 text-lg"></i>
+                                    <h2 class="text-lg font-bold text-white">Scheduled Agenda</h2>
+                                </div>
+
+                                <div
+                                    class="flex items-center space-x-2 bg-slate-900/60 p-1.5 rounded-xl border border-slate-800">
+                                    <button onclick="filterAppointments('All')" id="filterBtnAll"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 transition-all">All</button>
+                                    <button onclick="filterAppointments('Site Visit')" id="filterBtnSite"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">Site
+                                        Visits</button>
+                                    <button onclick="filterAppointments('Office Meeting')" id="filterBtnOffice"
+                                        class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all">Office
+                                        Meetings</button>
+                                </div>
+                            </div>
+
+                            <div id="appointmentsList" class="space-y-4 flex-grow">
+                                <!-- Dynamic Appointments Render Here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- ZONE 10: Asset Security & Logistics Tracker -->
+        <div id="zone10" class="tab-panel">
+            <div class="z10-container">
+                <header>
+                    <div>
+                        <h1>Asset Security & Logistics Tracker</h1>
+                        <div class="subtitle">Property Documents, Key Custody, Company Uniforms & Badges</div>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn" onclick="exportAssetsToExcel()" style="background:#10b981; color:white;">📊
+                            Export Excel</button>
+                        <button class="btn btn-danger" onclick="z10_resetToDefault()">Reset Data</button>
+                        <button class="btn" onclick="z10_openAddModal()">+ Register New Asset</button>
+                    </div>
+                </header>
+
+                <div class="metrics">
+                    <div class="metric-card">
+                        <div class="metric-label">Total Registered Assets</div>
+                        <div class="metric-value" id="z10-metric-total">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Checked Out</div>
+                        <div class="metric-value" style="color: var(--z10-warning)" id="z10-metric-out">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Overdue Returns</div>
+                        <div class="metric-value" style="color: var(--z10-danger)" id="z10-metric-overdue">0</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">In Secure Vault</div>
+                        <div class="metric-value" style="color: var(--z10-success)" id="z10-metric-in">0</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="search-filter">
+                        <input type="text" id="z10_searchInput" placeholder="Search Asset ID, Property, or Custodian..."
+                            oninput="z10_render()">
+                        <select id="z10_categoryFilter" onchange="z10_render()">
+                            <option value="ALL">All Categories</option>
+                            <option value="Keys">Property Keys</option>
+                            <option value="Document">Property Documents</option>
+                            <option value="ID Card">ID Cards / Badges</option>
+                            <option value="Uniform">Company Uniforms</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Asset ID</th>
+                                <th>Category</th>
+                                <th>Description / Tag</th>
+                                <th>Current Custodian</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="z10_tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add / Edit Asset Modal Form -->
+            <div class="z10-modal-overlay" id="z10_assetModal">
+                <div class="z10-modal">
+                    <div class="z10-modal-header">
+                        <span id="z10_modalTitle">Register New Asset</span>
+                        <span style="cursor:pointer;" onclick="z10_closeModal()">&times;</span>
+                    </div>
+
+                    <input type="hidden" id="z10_editIndex" value="-1">
+
+                    <div class="z10-form-row">
+                        <div class="z10-form-group">
+                            <label>Asset ID</label>
+                            <input type="text" id="z10_modalAssetId" placeholder="e.g. KEY-105">
+                        </div>
+                        <div class="z10-form-group">
+                            <label>Category</label>
+                            <select id="z10_modalCategory">
+                                <option value="Keys">Property Keys</option>
+                                <option value="Document">Property Documents</option>
+                                <option value="ID Card">ID Cards / Badges</option>
+                                <option value="Uniform">Company Uniforms</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="z10-form-group">
+                        <label>Description / Property Details</label>
+                        <input type="text" id="z10_modalDesc" placeholder="e.g. Master Key - Penthouse 4B">
+                    </div>
+
+                    <div class="z10-form-row">
+                        <div class="z10-form-group">
+                            <label>Custodian / Staff Member</label>
+                            <input type="text" id="z10_modalCustodian"
+                                placeholder="e.g. Central Vault or Sarah (Agent)">
+                        </div>
+                        <div class="z10-form-group">
+                            <label>Status</label>
+                            <select id="z10_modalStatus">
+                                <option value="Checked In">Checked In</option>
+                                <option value="Checked Out">Checked Out</option>
+                                <option value="Overdue">Overdue</option>
+                                <option value="Maintenance / Lost">Maintenance / Lost</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="z10-form-group">
+                        <label>Return Due Date</label>
+                        <input type="date" id="z10_modalDueDate">
+                    </div>
+
+                    <div class="z10-modal-footer">
+                        <button class="btn btn-secondary" onclick="z10_closeModal()">Cancel</button>
+                        <button class="btn" onclick="z10_saveAsset()">Save Asset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SHARED CROPPER MODAL (USED BY ZONE 2 & ZONE 4) -->
+    <div class="modal-overlay" id="globalCropModal">
+        <div class="modal-content">
+            <h3>Crop & Format Image</h3>
+            <div class="cropper-container-wrapper">
+                <img id="globalImageToCrop" src="" alt="Source Image Window">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeCropModal()">Cancel</button>
+                <button class="btn-crop" onclick="executeImageCropAndInsert()">Crop & Insert</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC FOR ALL 10 ZONES -->
+    <script>
+        // GLOBAL TAB SWITCHING FUNCTIONALITY
+        function openTab(evt, zoneName) {
+            let i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-panel");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].classList.remove("active");
+            }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].classList.remove("active");
+                tablinks[i].classList.remove("active-dark");
+            }
+            document.getElementById(zoneName).classList.add("active");
+
+            if (zoneName === 'zone9' || zoneName === 'zone10') {
+                evt.currentTarget.classList.add("active-dark");
+                document.body.style.backgroundColor = "#0f172a";
+            } else {
+                evt.currentTarget.classList.add("active");
+                document.body.style.backgroundColor = "#f0f3f6";
+            }
+        }
+
+        function resetTab() {
+            if (confirm("Are you sure you want to clear/refresh current tab details?")) {
+                window.location.reload();
+            }
+        }
+
+        // SHARED CROPPER VARIABLES
+        let activeCropperZone = null;
+        let cropperInstance = null;
+        let savedSelectionRange = null;
+
+        function saveCaretPosition() {
+            const selection = window.getSelection();
+            if (selection.getRangeAt && selection.rangeCount) {
+                savedSelectionRange = selection.getRangeAt(0);
+            }
+        }
+
+        function closeCropModal() {
+            document.getElementById('globalCropModal').style.display = 'none';
+            if (cropperInstance) {
+                cropperInstance.destroy();
+                cropperInstance = null;
+            }
+        }
+
+        function executeImageCropAndInsert() {
+            if (!cropperInstance || !activeCropperZone) return;
+
+            const canvas = cropperInstance.getCroppedCanvas({ imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
+            if (canvas) {
+                const base64DataUrl = canvas.toDataURL();
+                const imgNode = document.createElement('img');
+                imgNode.src = base64DataUrl;
+
+                const editor = document.getElementById(activeCropperZone === 2 ? 'z2_editor' : 'z4_editor');
+                editor.focus();
+
+                const selection = window.getSelection();
+                if (savedSelectionRange && (savedSelectionRange.commonAncestorContainer === editor || editor.contains(savedSelectionRange.commonAncestorContainer))) {
+                    selection.removeAllRanges();
+                    selection.addRange(savedSelectionRange);
+                    savedSelectionRange.deleteContents();
+                    savedSelectionRange.insertNode(imgNode);
+                } else {
+                    editor.appendChild(imgNode);
+                }
+
+                const pBreak = document.createElement('p');
+                pBreak.innerHTML = '<br>';
+                imgNode.parentNode.insertBefore(pBreak, imgNode.nextSibling);
+            }
+            closeCropModal();
+        }
+
+        // ZONE 1 LOGIC
+        function z1_showPreview() {
+            const area = parseFloat(document.getElementById('z1_area').value) || 0;
+            const rate = parseFloat(document.getElementById('z1_rate').value) || 0;
+            const total = (area * rate) * 1.18;
+
+            document.getElementById('z1_p_client').innerText = document.getElementById('z1_client_name').value || 'TOP Technologies Pvt. Ltd.';
+            document.getElementById('z1_p_no').innerText = document.getElementById('z1_invoice_no').value;
+            document.getElementById('z1_p_date').innerText = document.getElementById('z1_invoice_date').value;
+            document.getElementById('z1_p_period').innerText = document.getElementById('z1_period').value;
+            document.getElementById('z1_p_area').innerText = area;
+            document.getElementById('z1_p_rate').innerText = rate;
+            document.getElementById('z1_p_total').innerText = total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+            document.getElementById('z1_previewArea').style.display = 'block';
+        }
+
+        function z1_generateDoc() {
+            const formData = new FormData();
+            formData.append('client_name', document.getElementById('z1_client_name').value || 'TOP Technologies Pvt. Ltd.');
+            formData.append('invoice_no', document.getElementById('z1_invoice_no').value);
+            formData.append('invoice_date', document.getElementById('z1_invoice_date').value);
+            formData.append('period', document.getElementById('z1_period').value);
+            formData.append('area', document.getElementById('z1_area').value);
+            formData.append('rate', document.getElementById('z1_rate').value);
+
+            const file = document.getElementById('z1_template_file').files[0];
+            if (file) formData.append('templateFile', file);
+
+            fetch('http://127.0.0.1:5000/generate-invoice', { method: 'POST', body: formData })
+                .then(res => res.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Invoice_${document.getElementById('z1_invoice_no').value.replace(/\//g, '-') || 'invoice'}.docx`;
+                    a.click();
+                }).catch(err => alert('Error generating invoice: ' + err.message));
+        }
+
+        // ZONE 2 LOGIC
+        document.getElementById('z2_uploadButton').addEventListener('click', function () {
+            const file = document.getElementById('z2_invoiceFile').files[0];
+            if (!file) return alert("Please select a .docx file first.");
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                mammoth.convertToHtml({ arrayBuffer: e.target.result })
+                    .then(result => document.getElementById('z2_editor').innerHTML = result.value)
+                    .catch(err => alert("Error converting file: " + err.message));
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function z2_triggerImageUpload() {
+            activeCropperZone = 2;
+            saveCaretPosition();
+            document.getElementById('z2_imageInput').click();
+        }
+
+        function z2_handleImageSelection(event) {
+            const files = event.target.files;
+            if (files && files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('globalImageToCrop');
+                    img.src = e.target.result;
+                    document.getElementById('globalCropModal').style.display = 'flex';
+                    if (cropperInstance) cropperInstance.destroy();
+                    cropperInstance = new Cropper(img, { viewMode: 1, movable: true, zoomable: true });
+                };
+                reader.readAsDataURL(files[0]);
+            }
+        }
+
+        // ZONE 3 LOGIC
+        function z3_showPreview() {
+            const area = parseFloat(document.getElementById('z3_area').value) || 0;
+            const rate = parseFloat(document.getElementById('z3_rate').value) || 0;
+            const total = (area * rate) * 1.18;
+
+            document.getElementById('z3_p_client').innerText = document.getElementById('z3_client_name').value;
+            document.getElementById('z3_p_no').innerText = document.getElementById('z3_invoice_no').value;
+            document.getElementById('z3_p_date').innerText = document.getElementById('z3_invoice_date').value;
+            document.getElementById('z3_p_period').innerText = document.getElementById('z3_period').value;
+            document.getElementById('z3_p_area').innerText = area;
+            document.getElementById('z3_p_rate').innerText = rate;
+            document.getElementById('z3_p_total').innerText = total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+            document.getElementById('z3_previewArea').style.display = 'block';
+        }
+
+        function z3_generateDoc() {
+            const templateFile = document.getElementById('z3_templateFile').files[0];
+            if (!templateFile) return alert('Please upload a Word template before generating.');
+
+            const formData = new FormData();
+            formData.append('client_name', document.getElementById('z3_client_name').value);
+            formData.append('invoice_no', document.getElementById('z3_invoice_no').value);
+            formData.append('invoice_date', document.getElementById('z3_invoice_date').value);
+            formData.append('period', document.getElementById('z3_period').value);
+            formData.append('area', document.getElementById('z3_area').value);
+            formData.append('rate', document.getElementById('z3_rate').value);
+            formData.append('templateFile', templateFile);
+
+            fetch('http://127.0.0.1:5000/generate-invoice', { method: 'POST', body: formData })
+                .then(res => res.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Invoice_${document.getElementById('z3_invoice_no').value.replace(/\//g, '-') || 'invoice'}.docx`;
+                    a.click();
+                }).catch(err => alert('Error generating invoice: ' + err.message));
+        }
+
+        // ZONE 4 LOGIC
+        function z4_triggerImageUpload() {
+            activeCropperZone = 4;
+            saveCaretPosition();
+            document.getElementById('z4_imageInput').click();
+        }
+
+        function z4_handleImageSelection(event) {
+            const files = event.target.files;
+            if (files && files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('globalImageToCrop');
+                    img.src = e.target.result;
+                    document.getElementById('globalCropModal').style.display = 'flex';
+                    if (cropperInstance) cropperInstance.destroy();
+                    cropperInstance = new Cropper(img, { viewMode: 1, movable: true, zoomable: true });
+                };
+                reader.readAsDataURL(files[0]);
+            }
+        }
+
+        // ZONE 5 LOGIC
+        let z5_activePayload = {};
+        let z5_tallyRows = [];
+
+        async function z5_triggerAutomationPipeline() {
+            const fileInput = document.getElementById('z5_invoiceFile');
+            if (!fileInput.files.length) return alert('Please load a docx template first.');
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/automate', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status === "error") return alert("Error: " + data.message);
+
+                z5_activePayload = data;
+                document.getElementById('z5_field_party').innerText = data.party_name;
+                document.getElementById('z5_field_period').innerText = data.billing_period;
+                document.getElementById('z5_field_serial').innerText = data.invoice_no;
+                document.getElementById('z5_field_date').innerText = data.invoice_date;
+
+                document.getElementById('z5_table_base').innerText = data.taxable_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                document.getElementById('z5_table_cgst').innerText = data.cgst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                document.getElementById('z5_table_sgst').innerText = data.sgst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                document.getElementById('z5_table_grand').innerText = data.grand_total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+                document.getElementById('z5_previewBlock').classList.remove('hidden-element');
+            } catch (err) {
+                alert('Connection Refused: Ensure backend Python app is running on port 5000.');
+            }
+        }
+
+        async function z5_commitAndBuildWordDoc() {
+            const fileInput = document.getElementById('z5_invoiceFile');
+            const formData = new FormData();
+            formData.append('templateFile', fileInput.files[0]);
+            formData.append('party_name', z5_activePayload.party_name);
+            formData.append('invoice_no', z5_activePayload.invoice_no);
+            formData.append('invoice_date', z5_activePayload.invoice_date);
+            formData.append('period', z5_activePayload.billing_period);
+            formData.append('taxable_amount', z5_activePayload.taxable_amount);
+            formData.append('cgst_amount', z5_activePayload.cgst_amount);
+            formData.append('sgst_amount', z5_activePayload.sgst_amount);
+            formData.append('grand_total', z5_activePayload.grand_total);
+            formData.append('amount_words', z5_activePayload.amount_words);
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/generate-invoice', { method: 'POST', body: formData });
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Invoice_${z5_activePayload.invoice_no.replace(/\//g, '-')}.docx`;
+                a.click();
+
+                z5_tallyRows.push(z5_activePayload);
+                alert("Invoice Generated and added to Tally Queue!");
+            } catch (e) {
+                alert("Compilation failed.");
+            }
+        }
+
+        function z5_downloadTallyLedgerData() {
+            if (!z5_tallyRows.length) return alert('No invoice data available to export.');
+            const worksheetData = [
+                ['Invoice No', 'Invoice Date', 'Party Name', 'Billing Period', 'Taxable Amount', 'CGST Amount', 'SGST Amount', 'Grand Total'],
+                ...z5_tallyRows.map(r => [r.invoice_no, r.invoice_date, r.party_name, r.billing_period, r.taxable_amount, r.cgst_amount, r.sgst_amount, r.grand_total])
+            ];
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Tally Export');
+            XLSX.writeFile(workbook, `Tally_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        // ZONE 6 LOGIC
+        function z6_showPreview() {
+            const area = parseFloat(document.getElementById('z6_area').value) || 0;
+            const rate = parseFloat(document.getElementById('z6_rate').value) || 0;
+            const total = (area * rate) * 1.18;
+
+            document.getElementById('z6_p_client').innerText = document.getElementById('z6_client_name').value || 'TOP Technologies Pvt. Ltd.';
+            document.getElementById('z6_p_no').innerText = document.getElementById('z6_invoice_no').value;
+            document.getElementById('z6_p_date').innerText = document.getElementById('z6_invoice_date').value;
+            document.getElementById('z6_p_period').innerText = document.getElementById('z6_period').value;
+            document.getElementById('z6_p_area').innerText = area;
+            document.getElementById('z6_p_rate').innerText = rate;
+            document.getElementById('z6_p_total').innerText = total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+            document.getElementById('z6_previewArea').style.display = 'block';
+        }
+
+        function z6_generateDoc() {
+            const formData = new FormData();
+            formData.append('client_name', document.getElementById('z6_client_name').value || 'TOP Technologies Pvt. Ltd.');
+            formData.append('invoice_no', document.getElementById('z6_invoice_no').value);
+            formData.append('invoice_date', document.getElementById('z6_invoice_date').value);
+            formData.append('period', document.getElementById('z6_period').value);
+            formData.append('area', document.getElementById('z6_area').value);
+            formData.append('rate', document.getElementById('z6_rate').value);
+
+            const file = document.getElementById('z6_template_file').files[0];
+            if (file) formData.append('templateFile', file);
+
+            fetch('http://127.0.0.1:5000/generate-invoice', { method: 'POST', body: formData })
+                .then(res => res.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Invoice_${document.getElementById('z6_invoice_no').value.replace(/\//g, '-') || 'invoice'}.docx`;
+                    a.click();
+                }).catch(err => alert('Error generating invoice: ' + err.message));
+        }
+
+        // ZONE 7 LOGIC
+        function z7_showPreview() {
+            const area = parseFloat(document.getElementById('z7_area').value) || 0;
+            const rate = parseFloat(document.getElementById('z7_rate').value) || 0;
+            const total = (area * rate) * 1.18;
+
+            document.getElementById('z7_p_client').innerText = document.getElementById('z7_client_name').value;
+            document.getElementById('z7_p_no').innerText = document.getElementById('z7_invoice_no').value;
+            document.getElementById('z7_p_date').innerText = document.getElementById('z7_invoice_date').value;
+            document.getElementById('z7_p_period').innerText = document.getElementById('z7_period').value;
+            document.getElementById('z7_p_area').innerText = area;
+            document.getElementById('z7_p_rate').innerText = rate;
+            document.getElementById('z7_p_total').innerText = total.toLocaleString(undefined, { minimumFractionDigits: 2 });
+
+            document.getElementById('z7_previewArea').style.display = 'block';
+        }
+
+        function z7_generateDoc() {
+            const templateFile = document.getElementById('z7_templateFile').files[0];
+            if (!templateFile) return alert('Please upload a Word template before generating.');
+
+            const formData = new FormData();
+            formData.append('client_name', document.getElementById('z7_client_name').value);
+            formData.append('invoice_no', document.getElementById('z7_invoice_no').value);
+            formData.append('invoice_date', document.getElementById('z7_invoice_date').value);
+            formData.append('period', document.getElementById('z7_period').value);
+            formData.append('area', document.getElementById('z7_area').value);
+            formData.append('rate', document.getElementById('z7_rate').value);
+            formData.append('templateFile', templateFile);
+
+            fetch('http://127.0.0.1:5000/generate-invoice', { method: 'POST', body: formData })
+                .then(res => res.blob())
+                .then(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `Invoice_${document.getElementById('z7_invoice_no').value.replace(/\//g, '-') || 'invoice'}.docx`;
+                    a.click();
+                }).catch(err => alert('Error generating invoice: ' + err.message));
+        }
+
+        // ZONE 8 LOGIC
+        let z8_activePayload = {};
+        let z8_tallyRows = [];
+
+        async function z8_triggerAutomationPipeline() {
+            const fileInput = document.getElementById('z8_invoiceFile');
+            if (!fileInput.files.length) return alert('Please load a docx template first.');
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/automate', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.status === "error") return alert("Error: " + data.message);
+
+                z8_activePayload = data;
+                document.getElementById('z8_field_party').innerText = data.party_name;
+                document.getElementById('z8_field_period').innerText = data.billing_period;
+                document.getElementById('z8_field_serial').innerText = data.invoice_no;
+                document.getElementById('z8_field_date').innerText = data.invoice_date;
+
+                document.getElementById('z8_table_base').innerText = data.taxable_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                document.getElementById('z8_table_cgst').innerText = data.cgst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                document.getElementById('z8_table_sgst').innerText = data.sgst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                document.getElementById('z8_table_grand').innerText = data.grand_total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+                document.getElementById('z8_previewBlock').classList.remove('hidden-element');
+            } catch (err) {
+                alert('Connection Refused: Ensure backend Python app is running on port 5000.');
+            }
+        }
+
+        async function z8_commitAndBuildWordDoc() {
+            const fileInput = document.getElementById('z8_invoiceFile');
+            const formData = new FormData();
+            formData.append('templateFile', fileInput.files[0]);
+            formData.append('party_name', z8_activePayload.party_name);
+            formData.append('invoice_no', z8_activePayload.invoice_no);
+            formData.append('invoice_date', z8_activePayload.invoice_date);
+            formData.append('period', z8_activePayload.billing_period);
+            formData.append('taxable_amount', z8_activePayload.taxable_amount);
+            formData.append('cgst_amount', z8_activePayload.cgst_amount);
+            formData.append('sgst_amount', z8_activePayload.sgst_amount);
+            formData.append('grand_total', z8_activePayload.grand_total);
+            formData.append('amount_words', z8_activePayload.amount_words);
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/generate-invoice', { method: 'POST', body: formData });
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Invoice_${z8_activePayload.invoice_no.replace(/\//g, '-')}.docx`;
+                a.click();
+
+                z8_tallyRows.push(z8_activePayload);
+                alert("Invoice Generated and added to Tally Queue!");
+            } catch (e) {
+                alert("Compilation failed.");
+            }
+        }
+
+        function z8_downloadTallyLedgerData() {
+            if (!z8_tallyRows.length) return alert('No invoice data available to export.');
+            const worksheetData = [
+                ['Invoice No', 'Invoice Date', 'Party Name', 'Billing Period', 'Taxable Amount', 'CGST Amount', 'SGST Amount', 'Grand Total'],
+                ...z8_tallyRows.map(r => [r.invoice_no, r.invoice_date, r.party_name, r.billing_period, r.taxable_amount, r.cgst_amount, r.sgst_amount, r.grand_total])
+            ];
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Tally Export');
+            XLSX.writeFile(workbook, `Tally_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        // ZONE 9 SCHEDULING HUB LOGIC
+        let appointments = JSON.parse(localStorage.getItem('agentAppointments')) || [
+            {
+                id: '1',
+                type: 'Site Visit',
+                role: 'Property Owner',
+                contact: 'Sarah Jenkins',
+                phone: '+1 (555) 234-5678',
+                location: '1248 Skyline Blvd, Unit 1201',
+                date: '2026-08-08',
+                time: '10:00',
+                notes: 'Owner interested in listing luxury penthouse. Perform initial inspection and photography.',
+                status: 'Upcoming'
+            },
+            {
+                id: '2',
+                type: 'Office Meeting',
+                role: 'Property Manager',
+                contact: 'Marcus Vance (Apex Management)',
+                phone: '+1 (555) 876-5432',
+                location: 'Headquarters - Conference Room B',
+                date: '2026-08-09',
+                time: '14:30',
+                notes: 'Quarterly leasing contract review for commercial portfolio properties.',
+                status: 'Upcoming'
+            }
+        ];
+
+        let currentFilter = 'All';
+
+        function saveAppointments() {
+            localStorage.setItem('agentAppointments', JSON.stringify(appointments));
+            updateStats();
+        }
+
+        function toggleLocationInput() {
+            const selectedType = document.querySelector('input[name="meetingType"]:checked').value;
+            const locationLabel = document.getElementById('locationLabel');
+            const locationInput = document.getElementById('propertyLocation');
+
+            if (selectedType === 'Site Visit') {
+                locationLabel.innerText = 'Property Address / Location';
+                locationInput.placeholder = 'e.g. 742 Evergreen Terrace, Suite 4B';
+            } else {
+                locationLabel.innerText = 'Meeting Room / Office Location';
+                locationInput.placeholder = 'e.g. Main Office, Room 302 or Zoom Link';
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('statTotal').innerText = appointments.length;
+            document.getElementById('statSiteVisits').innerText = appointments.filter(a => a.type === 'Site Visit').length;
+            document.getElementById('statOfficeMeetings').innerText = appointments.filter(a => a.type === 'Office Meeting').length;
+
+            const uniqueContacts = new Set(appointments.map(a => a.contact));
+            document.getElementById('statContacts').innerText = uniqueContacts.size;
+        }
+
+        function filterAppointments(filter) {
+            currentFilter = filter;
+            ['All', 'Site', 'Office'].forEach(btn => {
+                const el = document.getElementById(`filterBtn${btn}`);
+                if ((btn === 'All' && filter === 'All') ||
+                    (btn === 'Site' && filter === 'Site Visit') ||
+                    (btn === 'Office' && filter === 'Office Meeting')) {
+                    el.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-blue-600 transition-all";
+                } else {
+                    el.className = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-white transition-all";
+                }
+            });
+            renderAppointments();
+        }
+
+        function deleteAppointment(id) {
+            if (confirm('Are you sure you want to cancel and delete this scheduled meeting?')) {
+                appointments = appointments.filter(a => a.id !== id);
+                saveAppointments();
+                renderAppointments();
+            }
+        }
+
+        function toggleStatus(id) {
+            appointments = appointments.map(a => {
+                if (a.id === id) {
+                    a.status = a.status === 'Completed' ? 'Upcoming' : 'Completed';
+                }
+                return a;
+            });
+            saveAppointments();
+            renderAppointments();
+        }
+
+        function renderAppointments() {
+            const listContainer = document.getElementById('appointmentsList');
+            let filtered = appointments;
+
+            if (currentFilter !== 'All') {
+                filtered = appointments.filter(a => a.type === currentFilter);
+            }
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="h-64 flex flex-col items-center justify-center text-center p-6 border-2 border-dashed border-slate-800 rounded-2xl">
+                        <i class="fa-regular fa-calendar-xmark text-4xl text-slate-600 mb-3"></i>
+                        <p class="text-slate-400 font-medium">No appointments scheduled</p>
+                        <p class="text-slate-600 text-xs mt-1">Use the form on the left to schedule a new meeting or visit.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.sort((a, b) => new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`));
+
+            listContainer.innerHTML = filtered.map(app => {
+                const isSite = app.type === 'Site Visit';
+                const isCompleted = app.status === 'Completed';
+
+                return `
+                    <div class="p-5 rounded-2xl glass-panel transition-all duration-200 border-l-4 ${isSite ? 'border-l-purple-500' : 'border-l-amber-500'} ${isCompleted ? 'opacity-60' : ''}">
+                        <div class="flex flex-col sm:flex-row justify-between items-start gap-3">
+                            <div class="space-y-1.5">
+                                <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                                    <span class="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ${isSite ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
+                                        <i class="fa-solid ${isSite ? 'fa-location-dot' : 'fa-briefcase'} mr-1"></i>${app.type}
+                                    </span>
+                                    <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                                        <i class="fa-solid fa-user-tag mr-1 text-slate-400"></i>${app.role}
+                                    </span>
+                                    ${isCompleted ? `
+                                        <span class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            <i class="fa-solid fa-check mr-1"></i>Completed
+                                        </span>
+                                    ` : ''}
+                                </div>
+                                <h3 class="text-base font-bold text-white ${isCompleted ? 'line-through' : ''}">${app.contact}</h3>
+                                <p class="text-xs text-slate-400 flex items-center space-x-2">
+                                    <span><i class="fa-solid fa-phone text-slate-500 mr-1"></i>${app.phone}</span>
+                                </p>
+                            </div>
+
+                            <div class="text-left sm:text-right space-y-1">
+                                <div class="text-sm font-semibold text-blue-400">
+                                    <i class="fa-regular fa-calendar mr-1"></i>${app.date}
+                                </div>
+                                <div class="text-xs text-slate-300 font-medium">
+                                    <i class="fa-regular fa-clock mr-1"></i>${app.time}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-800/60 grid grid-cols-1 sm:grid-cols-12 gap-3 text-xs">
+                            <div class="sm:col-span-8 text-slate-300">
+                                <p class="mb-1"><strong class="text-slate-400 font-semibold"><i class="fa-solid fa-map-pin mr-1 text-red-400"></i>Location:</strong> ${app.location}</p>
+                                ${app.notes ? `<p class="text-slate-400 italic"><strong class="not-italic text-slate-500">Note:</strong> "${app.notes}"</p>` : ''}
+                            </div>
+                            <div class="sm:col-span-4 flex items-end justify-end space-x-2 pt-2 sm:pt-0">
+                                <button onclick="toggleStatus('${app.id}')" title="Toggle Completed Status" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 transition-all border border-slate-700">
+                                    <i class="fa-solid ${isCompleted ? 'fa-rotate-left' : 'fa-check'}"></i>
+                                </button>
+                                <button onclick="deleteAppointment('${app.id}')" title="Cancel Appointment" class="p-2 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-300 hover:text-red-400 transition-all border border-slate-700">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('appointmentForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const newApp = {
+                id: Date.now().toString(),
+                type: document.querySelector('input[name="meetingType"]:checked').value,
+                role: document.getElementById('stakeholderRole').value,
+                contact: document.getElementById('contactName').value,
+                phone: document.getElementById('contactPhone').value,
+                location: document.getElementById('propertyLocation').value,
+                date: document.getElementById('appointmentDate').value,
+                time: document.getElementById('appointmentTime').value,
+                notes: document.getElementById('notes').value,
+                status: 'Upcoming'
+            };
+
+            appointments.push(newApp);
+            saveAppointments();
+            renderAppointments();
+
+            this.reset();
+            document.getElementById('appointmentDate').value = new Date().toISOString().split('T')[0];
+            toggleLocationInput();
+        });
+
+        function exportAppointmentsToExcel() {
+            if (!appointments.length) {
+                alert('No appointment data available to export.');
+                return;
+            }
+
+            const worksheetData = [
+                ['ID', 'Type', 'Role', 'Contact', 'Phone', 'Location', 'Date', 'Time', 'Notes', 'Status'],
+                ...appointments.map(app => [app.id, app.type, app.role || '', app.contact || '', app.phone || '', app.location || '', app.date || '', app.time || '', app.notes || '', app.status || ''])
+            ];
+
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Agent Appointments');
+            XLSX.writeFile(workbook, `Agent_Appointments_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        // ZONE 10 (ASSET SECURITY TRACKER) LOGIC
+        const Z10_STORAGE_KEY = 'RE_ASSET_SECURITY_TRACKER_DATA';
+        const z10_defaultAssets = [
+            { id: 'KEY-101', category: 'Keys', desc: 'Master Key - Unit 503', custodian: 'Central Vault / Storage', due: '-', status: 'Checked In' },
+            { id: 'DOC-204', category: 'Document', desc: 'Original Deed - Plot 12B', custodian: 'John Doe (Legal)', due: '2026-08-15', status: 'Checked Out' }
+        ];
+
+        function z10_loadAssets() {
+            const storedData = localStorage.getItem(Z10_STORAGE_KEY);
+            if (storedData) {
+                try { return JSON.parse(storedData); }
+                catch (e) { return [...z10_defaultAssets]; }
+            }
+            return [...z10_defaultAssets];
+        }
+
+        function z10_saveAssets() {
+            localStorage.setItem(Z10_STORAGE_KEY, JSON.stringify(z10_assets));
+        }
+
+        let z10_assets = z10_loadAssets();
+
+        function z10_render() {
+            const searchInput = document.getElementById('z10_searchInput');
+            const categoryFilter = document.getElementById('z10_categoryFilter');
+            if (!searchInput || !categoryFilter) return;
+
+            const search = searchInput.value.toLowerCase();
+            const cat = categoryFilter.value;
+            const tbody = document.getElementById('z10_tableBody');
+            tbody.innerHTML = '';
+
+            let countOut = 0, countOverdue = 0, countIn = 0;
+
+            z10_assets.forEach((item, index) => {
+                if (item.status === 'Checked Out') countOut++;
+                if (item.status === 'Overdue') countOverdue++;
+                if (item.status === 'Checked In') countIn++;
+
+                const matchesSearch = item.id.toLowerCase().includes(search) ||
+                    item.desc.toLowerCase().includes(search) ||
+                    item.custodian.toLowerCase().includes(search);
+                const matchesCat = cat === 'ALL' || item.category === cat;
+
+                if (matchesSearch && matchesCat) {
+                    let badgeClass = 'badge-in';
+                    if (item.status === 'Checked Out') badgeClass = 'badge-out';
+                    if (item.status === 'Overdue') badgeClass = 'badge-overdue';
+                    if (item.status === 'Maintenance / Lost') badgeClass = 'badge-maint';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${item.id}</strong></td>
+                        <td>${item.category}</td>
+                        <td>${item.desc}</td>
+                        <td>${item.custodian}</td>
+                        <td>${item.due}</td>
+                        <td><span class="badge ${badgeClass}">${item.status}</span></td>
+                        <td>
+                          <div class="action-group">
+                            <button class="btn btn-sm btn-edit" onclick="z10_openEditModal(${index})">Edit</button>
+                            <button class="btn btn-sm btn-del" onclick="z10_deleteAsset(${index})">Delete</button>
+                          </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+
+            document.getElementById('z10-metric-total').innerText = z10_assets.length;
+            document.getElementById('z10-metric-out').innerText = countOut;
+            document.getElementById('z10-metric-overdue').innerText = countOverdue;
+            document.getElementById('z10-metric-in').innerText = countIn;
+        }
+
+        function z10_deleteAsset(index) {
+            const item = z10_assets[index];
+            if (confirm(`Are you sure you want to delete asset ${item.id} (${item.desc})?`)) {
+                z10_assets.splice(index, 1);
+                z10_saveAssets();
+                z10_render();
+            }
+        }
+
+        function z10_openAddModal() {
+            document.getElementById('z10_editIndex').value = "-1";
+            document.getElementById('z10_modalTitle').innerText = "Register New Asset";
+            document.getElementById('z10_modalAssetId').value = '';
+            document.getElementById('z10_modalDesc').value = '';
+            document.getElementById('z10_modalCustodian').value = 'Central Vault / Storage';
+            document.getElementById('z10_modalStatus').value = 'Checked In';
+            document.getElementById('z10_modalDueDate').value = '';
+            document.getElementById('z10_assetModal').style.display = 'flex';
+        }
+
+        function z10_openEditModal(index) {
+            const item = z10_assets[index];
+            document.getElementById('z10_editIndex').value = index;
+            document.getElementById('z10_modalTitle').innerText = `Edit Asset: ${item.id}`;
+            document.getElementById('z10_modalAssetId').value = item.id;
+            document.getElementById('z10_modalCategory').value = item.category;
+            document.getElementById('z10_modalDesc').value = item.desc;
+            document.getElementById('z10_modalCustodian').value = item.custodian;
+            document.getElementById('z10_modalStatus').value = item.status;
+            document.getElementById('z10_modalDueDate').value = item.due !== '-' ? item.due : '';
+            document.getElementById('z10_assetModal').style.display = 'flex';
+        }
+
+        function z10_closeModal() {
+            document.getElementById('z10_assetModal').style.display = 'none';
+        }
+
+        function z10_saveAsset() {
+            const editIdx = parseInt(document.getElementById('z10_editIndex').value);
+            const id = document.getElementById('z10_modalAssetId').value.trim();
+            const category = document.getElementById('z10_modalCategory').value;
+            const desc = document.getElementById('z10_modalDesc').value.trim();
+            const custodian = document.getElementById('z10_modalCustodian').value.trim() || 'Central Vault / Storage';
+            const status = document.getElementById('z10_modalStatus').value;
+            const dueDate = document.getElementById('z10_modalDueDate').value;
+
+            if (!id || !desc) {
+                alert('Please complete the Asset ID and Description fields.');
+                return;
+            }
+
+            const assetPayload = {
+                id,
+                category,
+                desc,
+                custodian,
+                due: dueDate ? dueDate : '-',
+                status
+            };
+
+            if (editIdx >= 0) {
+                z10_assets[editIdx] = assetPayload;
+            } else {
+                z10_assets.push(assetPayload);
+            }
+
+            z10_saveAssets();
+            z10_closeModal();
+            z10_render();
+        }
+
+        function exportAssetsToExcel() {
+            if (!z10_assets.length) {
+                alert('No asset data available to export.');
+                return;
+            }
+
+            const worksheetData = [
+                ['Asset ID', 'Category', 'Description / Tag', 'Current Custodian', 'Due Date', 'Status'],
+                ...z10_assets.map(asset => [asset.id, asset.category, asset.desc, asset.custodian, asset.due, asset.status])
+            ];
+
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Asset Security Tracker');
+            XLSX.writeFile(workbook, `Asset_Security_Tracker_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
+
+        function z10_resetToDefault() {
+            if (confirm("Reset tracker to default sample data? This will clear all added records.")) {
+                localStorage.removeItem(Z10_STORAGE_KEY);
+                z10_assets = [...z10_defaultAssets];
+                z10_saveAssets();
+                z10_render();
+            }
+        }
+
+        // Initialize Defaults
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('appointmentDate').value = new Date().toISOString().split('T')[0];
+            updateStats();
+            renderAppointments();
+            z10_render();
+        });
+    </script>
+</body>
+
+</html>

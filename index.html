@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landscape Navigation Bar (Full Sub-Menu)</title>
+
+  <!-- ================= PERSISTENT AUTHENTICATION GUARD (UPDATE 3) ================= -->
+  <script>
+    // Check both localStorage and sessionStorage for authentication
+    const isAuthLocal = localStorage.getItem('is_authenticated');
+    const isAuthSession = sessionStorage.getItem('is_authenticated');
+
+    if (isAuthLocal !== 'true' && isAuthSession !== 'true') {
+      alert("Access Denied! Please sign up or log in first.");
+      // Redirect back to auth page
+      window.location.href = "test2.html";
+    }
+  </script>
+  <!-- ==================================================================== -->
+
+  <style>
+    /* Reset & Base Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+    }
+
+    /* Main Navigation Bar Container */
+    .navbar {
+      background-color: #1a1e24;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+      position: relative;
+    }
+
+    .nav-menu {
+      display: flex;
+      list-style: none;
+      width: 100%;
+      max-width: 1400px;
+      justify-content: space-between;
+    }
+
+    /* Main Menu Items */
+    .nav-item {
+      position: relative;
+      flex: 1;
+      text-align: center;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 18px 12px;
+      color: #e0e6ed;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .nav-link:hover,
+    .nav-item:hover>.nav-link {
+      background-color: #2c323b;
+      color: #00d4ff;
+    }
+
+    /* Logout Button Styling */
+    .logout-btn {
+      background-color: #dc3545 !important;
+      color: #ffffff !important;
+      border-radius: 4px;
+      margin: 10px 5px;
+      padding: 8px 14px !important;
+    }
+
+    .logout-btn:hover {
+      background-color: #c82333 !important;
+    }
+
+    /* Vertical Sub-Menu Box */
+    .sub-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: max-content;
+      min-width: 220px;
+      max-width: 450px;
+      background-color: #ffffff;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      border-radius: 0 0 8px 8px;
+      border-top: 3px solid #00d4ff;
+      padding: 8px 0;
+      z-index: 1000;
+      list-style: none;
+    }
+
+    .nav-item:nth-last-child(-n+2) .sub-menu {
+      left: auto;
+      right: 0;
+    }
+
+    .nav-item:hover .sub-menu {
+      display: block;
+    }
+
+    .sub-menu li {
+      width: 100%;
+    }
+
+    .sub-menu li a {
+      display: block;
+      padding: 10px 18px;
+      color: #333333;
+      text-decoration: none;
+      font-size: 13px;
+      text-align: left;
+      transition: background-color 0.2s, color 0.2s, padding-left 0.2s;
+      white-space: normal;
+      word-wrap: break-word;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .sub-menu li:last-child a {
+      border-bottom: none;
+    }
+
+    .sub-menu li a:hover {
+      background-color: #f0f7ff;
+      color: #0076ff;
+      font-weight: 600;
+      padding-left: 22px;
+    }
+
+    /* ================= BANNER IMAGE STYLES ================= */
+    .banner-container {
+      width: 100%;
+      max-width: 1400px;
+      margin: 20px auto;
+      padding: 0 15px;
+    }
+
+    .banner-image {
+      width: 100%;
+      height: auto;
+      max-height: 550px;
+      object-fit: cover;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="navbar">
+    <ul class="nav-menu">
+
+      <!-- Category 1 -->
+      <li class="nav-item">
+        <a href="test5.html" class="nav-link">Front Office Manager</a>
+      </li>
+
+      <!-- Category 2 -->
+      <li class="nav-item">
+        <a href="test4.html" class="nav-link">HR</a>
+      </li>
+
+
+      <!-- Category 3 -->
+      <li class="nav-item">
+        <a href="test1.html" class="nav-link">Realestate</a>
+      </li>
+
+      <!-- Category 4 -->
+      <li class="nav-item">
+        <a href="test.html" class="nav-link">Accounting</a>
+      </li>
+
+
+      <!-- Category 5 -->
+      <li class="nav-item">
+        <a href="test3.html" class="nav-link">Stock market Operations</a>
+      </li>
+
+      <!-- MANUAL LOGOUT BUTTON -->
+      <li class="nav-item">
+        <a href="#" onclick="handleLogout()" class="nav-link logout-btn">Logout</a>
+      </li>
+
+    </ul>
+  </nav>
+
+  <!-- STATIC HERO BANNER SECTION -->
+  <header class="banner-container">
+    <img src="banner.jpg" alt="Real Estate vs Stock Market Banner" class="banner-image">
+  </header>
+
+  <!-- Manual Logout Handler -->
+  <script>
+    function handleLogout() {
+      // Wipes authentication state ONLY when clicked manually
+      localStorage.removeItem('is_authenticated');
+      sessionStorage.removeItem('is_authenticated');
+      alert('Logged out successfully.');
+      window.location.href = "test2.html";
+    }
+  </script>
+
+</body>
+
+</html>
